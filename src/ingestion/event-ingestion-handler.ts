@@ -9,19 +9,20 @@ export class EventIngestionHandler {
   private serverEventStream?: BindableEvent 
   private clientEventStream: RemoteEvent 
   private userConfig: UserConfig
-  private eventBuilder: EventBuilder
-  private batchHandler = new BatchHandler()
+  private eventBuilder?: EventBuilder
+  private batchHandler?: BatchHandler 
   private isServer: boolean 
 
   constructor(userConfig: UserConfig) {
     this.userConfig = userConfig
-    this.eventBuilder = new EventBuilder(userConfig)
 
     this.isServer = RunService.IsServer()
     if (this.isServer) {
       this.serverEventConnections()
       this.serverEventStream = this.createServerEventStream()
       this.clientEventStream = this.createClientEventStream()
+      this.eventBuilder = new EventBuilder(userConfig)
+      this.batchHandler = new BatchHandler()
     }
     else {
       const remote = ReplicatedStorage.WaitForChild("RosaClientEventStream") as RemoteEvent
@@ -50,14 +51,16 @@ export class EventIngestionHandler {
 
     this.serverEventStream?.Event.Connect((player: Player, ...args: unknown[]) => {
       const event = args[0] as EventRequest
+      print("Here")
       this.registerEvent(player, event)
     })
   }
 
   private registerEvent(player: Player, event: EventRequest): void {
-    this.eventBuilder.buildEvent(player, event).then((fullEvent) => {
+    this.eventBuilder?.buildEvent(player, event).then((fullEvent) => {
       RunTimeTypeEnforcement.enforce(fullEvent)
-      this.batchHandler.addEvent(fullEvent)
+      print("Here2")
+      this.batchHandler?.addEvent(fullEvent)
     })
   }
 

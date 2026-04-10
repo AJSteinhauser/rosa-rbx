@@ -21,6 +21,7 @@ export class BatchHandler {
 
   public addEvent(event: Event) {
     const [isValid, err] = this.typeEnforcer(event)
+    print("TEsting")
     if (!isValid) {
       throw `Invalid event: ${err}`
     }
