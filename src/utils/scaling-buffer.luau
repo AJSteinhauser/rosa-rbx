@@ -17,8 +17,11 @@ function ScalingBuffer:size(): number
 	return self.currentSize
 end
 
-function ScalingBuffer:resizeBuffer()
-	local newBuf = buffer.create(self.currentSize + AUTO_ALLOCATE_SIZE)
+-- extraNeeded lets callers request more than the default chunk when a single
+-- push would exceed the standard allocation size (e.g. a >100KB string).
+function ScalingBuffer:resizeBuffer(extraNeeded: number?)
+	local extra = math.max(extraNeeded or 0, AUTO_ALLOCATE_SIZE)
+	local newBuf = buffer.create(self.currentSize + extra)
 	buffer.copy(newBuf, 0, self.buf, 0, self.currentSize)
 	self.buf = newBuf
 end
@@ -49,7 +52,7 @@ end
 
 function ScalingBuffer:push_string(value: string)
 	if self.currentSize + #value >= buffer.len(self.buf) then
-		self:resizeBuffer()
+		self:resizeBuffer(#value)
 	end
 	buffer.writestring(self.buf, self.currentSize, value)
 	self.currentSize += #value
