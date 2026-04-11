@@ -1,6 +1,6 @@
 {
   "name": "rosa-rbx-pipeline",
   "tree": {
-    "$path": "out"
+    "$path": "src"
   }
 }

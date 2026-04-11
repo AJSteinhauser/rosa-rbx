@@ -54,7 +54,7 @@ function EventBuilder:buildEvent(player: Player, eventRequest)
 		eventTimeStamp = os.time(),
 		sessionID      = self.sessionManager:getSessionId(player),
 		tag            = eventRequest.tag,
-		platform       = platform.Name,
+		platform       = typeof(platform) == "EnumItem" and platform.Name or tostring(platform),
 		position       = position,
 		version        = version,
 		teamId         = self.config.getTeamName and self.config.getTeamName(player) or nil,

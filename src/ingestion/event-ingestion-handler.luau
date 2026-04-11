@@ -18,6 +18,20 @@ local BatchHandler      = require(script.Parent.Parent.egress.components["batch-
 --   local handler = EventIngestionHandler.new(userConfig)
 --   handler:addEvent(player, { tag = "ItemPickup" })  -- fires to server automatically
 
+-- On the client, wire up the platform listener as soon as this module is required.
+-- This runs once at module load time so it works even if new() is called late.
+if not RunService:IsServer() then
+	task.spawn(function()
+		local platformModule = script.Parent["player-platform-manager"]
+		local platformRemote = platformModule:WaitForChild("PlatformManager") :: RemoteEvent
+		platformRemote.OnClientEvent:Connect(function(request)
+			if request == "getPlatform" then
+				platformRemote:FireServer(UserInputService.Platform)
+			end
+		end)
+	end)
+end
+
 local EventIngestionHandler = {}
 EventIngestionHandler.__index = EventIngestionHandler
 
@@ -42,16 +56,6 @@ function EventIngestionHandler.new(userConfig)
 	else
 		-- Wait for the server to create the client event stream
 		self.clientEventStream = ReplicatedStorage:WaitForChild("RosaClientEventStream")
-
-		-- Respond to platform detection requests from the server.
-		-- The PlatformManager RemoteEvent is a child of the PlayerPlatformManager module.
-		local platformModule = script.Parent["player-platform-manager"]
-		local platformRemote = platformModule:WaitForChild("PlatformManager") :: RemoteEvent
-		platformRemote.OnClientEvent:Connect(function(request)
-			if request == "getPlatform" then
-				platformRemote:FireServer(UserInputService.Platform)
-			end
-		end)
 	end
 
 	return self

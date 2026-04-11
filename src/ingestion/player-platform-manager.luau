@@ -53,20 +53,18 @@ function PlayerPlatformManager:getPlatform(player: Player)
 	local thread = coroutine.running()
 	self.pendingRequests[player] = thread
 
-	-- Timeout: if the client doesn't respond within 10s, resume with an error
+	-- Timeout: if the client doesn't respond within 10s, fall back to "Unknown"
 	task.delay(10, function()
 		if self.pendingRequests[player] == thread then
 			self.pendingRequests[player] = nil
-			task.spawn(thread, nil, "Platform request timed out for: " .. player.Name)
+			warn("Platform request timed out for: " .. player.Name .. " — defaulting to Unknown")
+			task.spawn(thread, "Unknown")
 		end
 	end)
 
 	self.remoteEvent:FireClient(player, "getPlatform")
 
-	local platform, err = coroutine.yield()
-	if err then
-		error(err, 2)
-	end
+	local platform = coroutine.yield()
 	return platform
 end
 
