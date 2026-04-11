@@ -1,0 +1,33 @@
+-- Rosa RBX Pipeline
+-- Analytics event pipeline for Roblox games.
+-- Pure Luau — no roblox-ts runtime required.
+--
+-- SETUP (Server script, runs once at game start):
+--
+--   local Rosa = require(path.to.RosaRbxPipeline)
+--
+--   local handler = Rosa.new({
+--       clientEvents = {
+--           enabled = true,
+--           whitelistedEventTags = { "ItemPickup", "PlayerDeath" }, -- optional whitelist
+--       },
+--
+--       -- Optional overrides (all have sensible defaults):
+--       -- getPosition = function(player) return player.Character.PrimaryPart.Position end,
+--       -- getVersion  = function() return "1.2.0" end,
+--       -- getTeamName = function(player) return player.Team and player.Team.Name end,
+--       -- getMapName  = function(player) return "Lobby" end,
+--   })
+--
+-- LOGGING AN EVENT (Server or Client script):
+--
+--   handler:addEvent(player, {
+--       tag      = "PlayerKill",
+--       quantity = 1,                       -- optional
+--       custom   = { weapon = "Sword" },    -- optional, values must be string or number
+--   })
+--
+-- SECRETS:
+--   Add your Rosa API key to Roblox secrets under the name "ROSA-API-KEY".
+
+return require(script.ingestion["event-ingestion-handler"])
