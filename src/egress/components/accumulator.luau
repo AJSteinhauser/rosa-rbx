@@ -12,7 +12,6 @@ Accumulator.__index = Accumulator
 function Accumulator.new()
 	local self = setmetatable({}, Accumulator)
 	self.playerBuckets = {}
-	self.dataBuffer = ScalingBuffer.new()
 	self:initBuffer()
 	return self
 end
@@ -20,6 +19,7 @@ end
 function Accumulator:initBuffer()
 	self.dataBuffer = ScalingBuffer.new()
 	self.dataBuffer:push_string("[")
+	self.isEmpty = true
 end
 
 function Accumulator:getOrCreateBucket(sessionId: string)
@@ -38,8 +38,14 @@ function Accumulator:addEvent(event): boolean
 		warn(`Player {event.sessionID} is rate limited.`)
 		return false
 	end
-	-- Leading comma keeps the array valid as events are appended
-	self.dataBuffer:push_string("," .. HttpService:JSONEncode(event))
+	-- Comma separates events; first event gets none so the array is valid JSON
+	local encoded = HttpService:JSONEncode(event)
+	if self.isEmpty then
+		self.dataBuffer:push_string(encoded)
+		self.isEmpty = false
+	else
+		self.dataBuffer:push_string("," .. encoded)
+	end
 	return self.dataBuffer:size() >= Constants.BODY_OVERSHOOT_TARGET
 end
 

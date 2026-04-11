@@ -1,0 +1,24 @@
+{
+  "name": "rosa-rbx-pipeline-tests",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "RosaRbxPipeline": {
+        "$path": "src"
+      },
+      "Packages": {
+        "$path": "DevPackages"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "TestRunner": {
+        "$path": "tests/runner.server.luau"
+      },
+      "Tests": {
+        "$path": "tests/specs"
+      }
+    }
+  }
+}

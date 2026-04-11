@@ -1,6 +1,12 @@
-/node_modules
-/out
-/include
-*.tsbuildinfo
+# Build output
 /dist
-*.DS_Store
+
+# Wally packages
+/Packages
+/DevPackages
+
+# Test place (generated, not committed)
+*.rbxl
+
+# macOS
+.DS_Store
