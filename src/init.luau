@@ -1,33 +1,36 @@
 -- Rosa RBX Pipeline
 -- Analytics event pipeline for Roblox games.
--- Pure Luau — no roblox-ts runtime required.
 --
--- SETUP (Server script, runs once at game start):
+-- Require this module from BOTH a ServerScript and a LocalScript.
+-- The module detects the runtime context automatically.
+-- All requirers share the same instance (Roblox module caching).
 --
---   local Rosa = require(path.to.RosaRbxPipeline)
+-- Add your Rosa API key to Roblox secrets under the name "ROSA-API-KEY".
 --
---   local handler = Rosa.new({
---       clientEvents = {
---           enabled = true,
---           whitelistedEventTags = { "ItemPickup", "PlayerDeath" }, -- optional whitelist
---       },
+-- SERVER SCRIPT:
+--   local Rosa = require(path.to.Rosa)
+--   Rosa:addServerEvent(player, { tag = "PlayerKill", quantity = 1, custom = { weapon = "Sword" } })
 --
---       -- Optional overrides (all have sensible defaults):
---       -- getPosition = function(player) return player.Character.PrimaryPart.Position end,
---       -- getVersion  = function() return "1.2.0" end,
---       -- getTeamName = function(player) return player.Team and player.Team.Name end,
---       -- getMapName  = function(player) return "Lobby" end,
---   })
---
--- LOGGING AN EVENT (Server or Client script):
---
---   handler:addEvent(player, {
---       tag      = "PlayerKill",
---       quantity = 1,                       -- optional
---       custom   = { weapon = "Sword" },    -- optional, values must be string or number
---   })
---
--- SECRETS:
---   Add your Rosa API key to Roblox secrets under the name "ROSA-API-KEY".
+-- LOCAL SCRIPT:
+--   local Rosa = require(path.to.Rosa)
+--   Rosa:addClientEvent({ tag = "ItemPickup", quantity = 1, custom = { item = "Potion" } })
 
-return require(script.ingestion["event-ingestion-handler"])
+return require(script.ingestion["event-ingestion-handler"]).new({
+    -- Default metrics — fires common events automatically. Set a group to false to disable.
+    defaultMetrics = {
+        playerEvents    = true, -- PlayerJoin, PlayerLeave (with sessionDuration)
+        characterEvents = true, -- CharacterSpawn, CharacterDeath
+    },
+
+    -- Client-side events forwarded from LocalScripts.
+    clientEvents = {
+        enabled              = true,
+        whitelistedEventTags = { "ItemPickup", "PlayerDeath" }, -- optional, remove to allow all tags
+    },
+
+    -- Optional overrides (all have sensible defaults):
+    -- getPosition = function(player) return player.Character.PrimaryPart.Position end,
+    -- getVersion  = function() return "1.2.0" end,
+    -- getTeamName = function(player) return player.Team and player.Team.Name end,
+    -- getMapName  = function(player) return "Lobby" end,
+})

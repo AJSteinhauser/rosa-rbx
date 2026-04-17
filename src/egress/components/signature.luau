@@ -6,8 +6,9 @@ local Constants = require(script.Parent.Parent.models.constants)
 -- The idempotency-key prevents duplicate processing if the request is retried.
 local function generateHeader()
 	return {
-		["api-secret"]      = HttpService:GetSecret(Constants.SECRETS_KEY_LOOKUP),
-		["idempotency-key"] = HttpService:GenerateGUID(false),
+		["x-rosa-api-key"]      = HttpService:GetSecret(Constants.SECRETS_KEY_LOOKUP),
+		["x-rosa-idempotency-key"] = HttpService:GenerateGUID(false),
+    ["content-type"]    = "application/octet-stream"
 	}
 end
 

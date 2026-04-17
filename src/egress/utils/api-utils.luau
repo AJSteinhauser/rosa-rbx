@@ -4,10 +4,10 @@ local ApiModels = require(script.Parent.Parent.models.api)
 
 -- Sends an HTTP request and retries on transient failures with exponential backoff.
 -- Returns (response, totalAttempts). Errors if retry limit is exceeded.
-local function sendRetryHandler(request: RequestAsyncRequest, retryCount: number?): (RequestAsyncResponse, number)
-	retryCount = retryCount or 0
+local function sendRetryHandler(request: RequestAsyncRequest, attempts: number?): (HttpResponseData, number)
+	attempts = attempts or 0
 
-	if retryCount > Constants.MAX_HTTP_RETRY_ATTEMPTS then
+	if attempts > Constants.MAX_HTTP_RETRY_ATTEMPTS then
 		error("ROSA API request failed: exceeded max retry attempts")
 	end
 
@@ -15,13 +15,13 @@ local function sendRetryHandler(request: RequestAsyncRequest, retryCount: number
 
 	if not response.Success then
 		if not ApiModels.RETRYABLE_HTTP_STATUS_CODES[response.StatusCode] then
-			return response, retryCount
+			return response, attempts
 		end
-		task.wait(2 ^ retryCount)
-		return sendRetryHandler(request, retryCount + 1)
+		task.wait(2 ^ attempts)
+		return sendRetryHandler(request, attempts + 1)
 	end
 
-	return response, retryCount + 1
+	return response, attempts + 1
 end
 
 return {

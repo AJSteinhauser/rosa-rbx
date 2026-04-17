@@ -18,15 +18,12 @@ function EventBuilder.new(config)
 	return self
 end
 
+-- Returns nil if the character or root part is unavailable (e.g. during PlayerLeave).
 local function getPlayerPosition(player: Player)
 	local character = player.Character
-	if not character then
-		error("Player has no character")
-	end
+	if not character then return nil end
 	local rootPart = character:FindFirstChild("HumanoidRootPart") :: BasePart
-	if not rootPart then
-		error("Character has no HumanoidRootPart")
-	end
+	if not rootPart then return nil end
 	return Helpers.vector3ToPosition(rootPart.Position)
 end
 

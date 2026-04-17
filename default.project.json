@@ -1,6 +1,12 @@
 {
   "name": "rosa-rbx-pipeline",
   "tree": {
-    "$path": "src"
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "rosa-rbx-pipeline": {
+        "$path": "src"
+      }
+    }
   }
 }

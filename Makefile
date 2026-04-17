@@ -11,6 +11,7 @@ help:
 	@echo "  make build        Build the distributable .rbxm package"
 	@echo "  make test-place   Build a Roblox place for running tests in Studio"
 	@echo "  make clean        Remove all build artifacts"
+	@echo "  make serve        Rojo serves module to ReplicatedStorage
 
 install:
 	wally install
@@ -30,3 +31,9 @@ test-place: install $(DIST_DIR)
 
 clean:
 	rm -rf $(DIST_DIR)
+
+serve:
+	rojo serve default.project.json
+
+sourcemap:
+	rojo sourcemap default.project.json --output sourcemap.json
