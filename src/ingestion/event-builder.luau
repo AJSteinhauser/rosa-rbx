@@ -18,24 +18,12 @@ function EventBuilder.new(config)
 	return self
 end
 
--- Returns nil if the character or root part is unavailable (e.g. during PlayerLeave).
-local function getPlayerPosition(player: Player)
-	local character = player.Character
-	if not character then return nil end
-	local rootPart = character:FindFirstChild("HumanoidRootPart") :: BasePart
-	if not rootPart then return nil end
-	return Helpers.vector3ToPosition(rootPart.Position)
-end
-
 -- May yield while waiting for the client to report their platform.
 -- Call this from inside a task.spawn'd coroutine.
 function EventBuilder:buildEvent(player: Player, eventRequest)
-	local position
-	if self.config.getPosition then
-		position = Helpers.vector3ToPosition(self.config.getPosition(player))
-	else
-		position = getPlayerPosition(player)
-	end
+	local rawPos = self.config.getPosition(player)
+	if not rawPos then return nil end
+	local position = Helpers.vector3ToPosition(rawPos)
 
 	local platform = self.platformManager:getPlatform(player) -- yields if not cached
 

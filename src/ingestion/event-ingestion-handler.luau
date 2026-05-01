@@ -30,6 +30,14 @@ EventIngestionHandler.__index = EventIngestionHandler
 
 function EventIngestionHandler.new(userConfig)
 	local self = setmetatable({}, EventIngestionHandler)
+
+	if not userConfig.getPosition then
+		userConfig.getPosition = function(player: Player): Vector3?
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart
+			return root and root.Position or nil
+		end
+	end
+
 	self.userConfig = userConfig
 	self.isServer   = RunService:IsServer()
 
@@ -86,6 +94,7 @@ function EventIngestionHandler:registerEvent(player: Player, eventRequest)
   if not self.isServer then error("Server only function") end
 	task.spawn(function()
 		local fullEvent = self.eventBuilder:buildEvent(player, eventRequest)
+		if not fullEvent then return end
 		TypeEnforcement.enforce(fullEvent)
 		self.batchHandler:addEvent(fullEvent)
 	end)

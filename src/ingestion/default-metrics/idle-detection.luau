@@ -13,16 +13,8 @@ return function(handler, userConfig, _services)
 
 	local states = {} -- [Player] = { lastPos, idleSince, fired }
 
-	local function getPosition(player: Player): Vector3?
-		if userConfig.getPosition then
-			return userConfig.getPosition(player)
-		end
-		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart
-		return root and root.Position or nil
-	end
-
 	local function beginTracking(player: Player)
-		local pos = getPosition(player)
+		local pos = userConfig.getPosition(player)
 		if not pos then return end
 		states[player] = { lastPos = pos, idleSince = getTime(), fired = false }
 	end
@@ -30,7 +22,7 @@ return function(handler, userConfig, _services)
 	RunService.Heartbeat:Connect(function()
 		local now = getTime()
 		for player, state in states do
-			local pos = getPosition(player)
+			local pos = userConfig.getPosition(player)
 			if not pos then continue end
 
 			if (pos - state.lastPos).Magnitude >= MOVEMENT_THRESHOLD then

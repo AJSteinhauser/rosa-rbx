@@ -9,16 +9,8 @@ local DIRECTION_THRESHOLD = 35   -- degrees
 return function(handler, userConfig)
 	local tracked = {} -- [Player] = { lastPos, lastDir, lastTime }
 
-	local function getPosition(player: Player): Vector3?
-		if userConfig.getPosition then
-			return userConfig.getPosition(player)
-		end
-		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart
-		return root and root.Position or nil
-	end
-
 	local function beginTracking(player: Player)
-		local pos = getPosition(player)
+		local pos = userConfig.getPosition(player)
 		if not pos then return end
 		tracked[player] = { lastPos = pos, lastDir = nil, lastTime = os.clock() }
 		handler:addServerEvent(player, {
@@ -29,7 +21,7 @@ return function(handler, userConfig)
 	RunService.Heartbeat:Connect(function()
 		local now = os.clock()
 		for player, state in tracked do
-			local currentPos = getPosition(player)
+			local currentPos = userConfig.getPosition(player)
 			if not currentPos then continue end
 
 			local delta    = currentPos - state.lastPos
