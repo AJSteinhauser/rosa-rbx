@@ -21,7 +21,7 @@ end
 -- May yield while waiting for the client to report their platform.
 -- Call this from inside a task.spawn'd coroutine.
 function EventBuilder:buildEvent(player: Player, eventRequest)
-	local rawPos = self.config.getPosition(player)
+	local rawPos = eventRequest.position or self.config.getPosition(player)
 	if not rawPos then return nil end
 	local position = Helpers.vector3ToPosition(rawPos)
 

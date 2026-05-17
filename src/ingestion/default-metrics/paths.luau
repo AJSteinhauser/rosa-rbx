@@ -5,6 +5,7 @@ local SAMPLE_RATE         = 0.1
 local DISTANCE_THRESHOLD  = 10   -- studs
 local TIME_FALLBACK       = 4    -- seconds
 local DIRECTION_THRESHOLD = 35   -- degrees
+local MIN_TAG_INTERVAL    = 1    -- seconds between emitted _PathTag events
 
 return function(handler, userConfig)
 	local tracked = {} -- [Player] = { lastPos, lastDir, lastTime }
@@ -12,10 +13,8 @@ return function(handler, userConfig)
 	local function beginTracking(player: Player)
 		local pos = userConfig.getPosition(player)
 		if not pos then return end
-		tracked[player] = { lastPos = pos, lastDir = nil, lastTime = os.clock() }
-		handler:addServerEvent(player, {
-			tag    = "_PathStart",
-		})
+		tracked[player] = { lastPos = pos, lastDir = nil, lastTime = os.clock(), lastTagTime = os.clock() }
+		handler:addServerEvent(player, { tag = "_PathStart", position = pos })
 	end
 
 	RunService.Heartbeat:Connect(function()
@@ -36,16 +35,21 @@ return function(handler, userConfig)
 
 			local elapsed = now - state.lastTime
 			if distance >= DISTANCE_THRESHOLD or directionChanged or elapsed >= TIME_FALLBACK then
-				handler:addServerEvent(player, { tag = "_PathTag" })
 				state.lastPos  = currentPos
 				state.lastDir  = distance > 0.1 and delta.Unit or state.lastDir
 				state.lastTime = now
+				if now - state.lastTagTime >= MIN_TAG_INTERVAL then
+					handler:addServerEvent(player, { tag = "_PathTag", position = currentPos })
+					state.lastTagTime = now
+				end
 			end
 		end
 	end)
 
+	local inStudio = RunService:IsStudio()
+
 	local function watchPlayer(player: Player)
-		if math.random() >= SAMPLE_RATE then return end
+		if not inStudio and math.random() >= SAMPLE_RATE then return end
 		player.CharacterAdded:Connect(function()
 			task.wait(1)
 			beginTracking(player)
