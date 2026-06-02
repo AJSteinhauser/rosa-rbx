@@ -7,6 +7,13 @@ local Helpers               = require(script.Parent.Parent.utils.helpers)
 -- Resolves position, platform, session ID, and version automatically.
 -- NOTE: buildEvent yields the calling coroutine while waiting for platform detection.
 
+local CLOCK_ORIGIN = os.time()
+local CLOCK_START  = os.clock()
+
+local function timeMs()
+	return math.floor((CLOCK_ORIGIN + (os.clock() - CLOCK_START)) * 1000)
+end
+
 local EventBuilder = {}
 EventBuilder.__index = EventBuilder
 
@@ -36,7 +43,7 @@ function EventBuilder:buildEvent(player: Player, eventRequest)
 
 	return {
 		eventId        = HttpService:GenerateGUID(false),
-		eventTimeStamp = os.time(),
+		eventTimeStamp = timeMs(),
 		sessionID      = self.sessionManager:getSessionId(player),
 		tag            = eventRequest.tag,
 		platform       = typeof(platform) == "EnumItem" and platform.Name or tostring(platform),

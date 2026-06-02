@@ -50,8 +50,9 @@ function EventIngestionHandler.new(userConfig)
 		self.clientEventStream.Name   = "RosaClientEventStream"
 		self.clientEventStream.Parent = ReplicatedStorage
 
-		self.eventBuilder = EventBuilder.new(userConfig)
-		self.batchHandler = BatchHandler.new()
+		self.eventBuilder       = EventBuilder.new(userConfig)
+		self.batchHandler       = BatchHandler.new()
+		self.internalClientTags = {}
 
 		self:setupServerConnections()
 
@@ -74,7 +75,7 @@ function EventIngestionHandler:setupServerConnections()
 	if self.userConfig.clientEvents and self.userConfig.clientEvents.enabled then
 		self.clientEventStream.OnServerEvent:Connect(function(player, event)
 			local whitelist = self.userConfig.clientEvents.whitelistedEventTags
-			if whitelist and not table.find(whitelist, event.tag) then
+			if whitelist and not table.find(whitelist, event.tag) and not self.internalClientTags[event.tag] then
 				warn(`{event.tag} is not a whitelisted client event.`)
 				return
 			end
@@ -101,6 +102,11 @@ function EventIngestionHandler:registerEvent(player: Player, eventRequest)
 end
 
 -- Queues an event for ingestion. Works from both server and client scripts.
+function EventIngestionHandler:allowClientTag(tag: string)
+	if not self.isServer then error("Server only function") end
+	self.internalClientTags[tag] = true
+end
+
 function EventIngestionHandler:addServerEvent(player: Player, eventRequest)
   if not self.isServer then error("Server only function") end
   self.serverEventStream:Fire(player, eventRequest)

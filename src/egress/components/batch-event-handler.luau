@@ -78,7 +78,6 @@ function BatchHandler:sendEventBuffer(buff: buffer)
 		if attemptCount > 1 then
 			warn(`ROSA API request succeeded after {attemptCount} attempts`)
 		end
-    print(response)
 	end)
 end
 

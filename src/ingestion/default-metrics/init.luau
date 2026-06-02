@@ -12,9 +12,11 @@
 --   marketplaceEvents  — ProductPurchased, ProductDeclined, GamePassPurchased, GamePassDeclined
 --   chatEvents         — ChatMessage
 --   teamEvents         — TeamChanged
+--   jumpEvents         — PlayerJump
 --
 -- Client groups (run in LocalScript context):
 --   clientPerformance  — FpsSample (quantity = fps; every 30s; off by default)
+--   settingsEvents     — SettingsOpened
 --
 -- All groups default to enabled unless noted. Set a group to false to disable:
 --   defaultMetrics = { characterEvents = false }
@@ -29,7 +31,9 @@ local setupIdleDetection   = require(script["idle-detection"])
 local setupMarketplace     = require(script["marketplace-events"])
 local setupChatEvents      = require(script["chat-events"])
 local setupTeamEvents      = require(script["team-events"])
+local setupJumpEvents      = require(script["jump-events"])
 local setupClientPerf      = require(script["client-performance"])
+local setupSettingsEvents  = require(script["settings-events"])
 
 local DefaultMetrics = {}
 
@@ -64,11 +68,26 @@ function DefaultMetrics.setup(handler, config, userConfig, _services)
 	if config.teamEvents ~= false then
 		setupTeamEvents(handler, _services)
 	end
+	if config.jumpEvents ~= false then
+		setupJumpEvents(handler, _services)
+	end
+
+	-- Register client-side default metric tags so they pass through the whitelist
+	-- even when the user has whitelistedEventTags configured.
+	if config.settingsEvents ~= false then
+		handler:allowClientTag("SettingsOpened")
+	end
+	if config.clientPerformance == true then
+		handler:allowClientTag("FpsSample")
+	end
 end
 
 function DefaultMetrics.setupClient(handler, config, _services)
 	if config.clientPerformance == true then
 		setupClientPerf(handler, _services)
+	end
+	if config.settingsEvents ~= false then
+		setupSettingsEvents(handler, _services)
 	end
 end
 

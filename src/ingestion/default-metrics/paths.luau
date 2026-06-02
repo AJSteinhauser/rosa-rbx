@@ -5,7 +5,7 @@ local SAMPLE_RATE         = 0.1
 local DISTANCE_THRESHOLD  = 10   -- studs
 local TIME_FALLBACK       = 4    -- seconds
 local DIRECTION_THRESHOLD = 35   -- degrees
-local MIN_TAG_INTERVAL    = 1    -- seconds between emitted _PathTag events
+local MIN_TAG_INTERVAL    = 0.1  -- seconds between emitted _PathTag events
 
 return function(handler, userConfig)
 	local tracked = {} -- [Player] = { lastPos, lastDir, lastTime }
