@@ -5,6 +5,7 @@ local EventBuilder      = require(script.Parent["event-builder"])
 local TypeEnforcement   = require(script.Parent["type-enforcement"])
 local BatchHandler      = require(script.Parent.Parent.egress.components["batch-event-handler"])
 local DefaultMetrics    = require(script.Parent["default-metrics"])
+local Types             = require(script.Parent.types)
 
 -- Central coordinator for event ingestion.
 --
@@ -91,7 +92,7 @@ end
 
 -- Runs event building and batching in a separate task to avoid blocking the caller.
 -- Platform detection may yield, so this must not run on the main thread.
-function EventIngestionHandler:registerEvent(player: Player, eventRequest)
+function EventIngestionHandler:registerEvent(player: Player, eventRequest: Types.EventRequest)
   if not self.isServer then error("Server only function") end
 	task.spawn(function()
 		local fullEvent = self.eventBuilder:buildEvent(player, eventRequest)
@@ -107,12 +108,12 @@ function EventIngestionHandler:allowClientTag(tag: string)
 	self.internalClientTags[tag] = true
 end
 
-function EventIngestionHandler:addServerEvent(player: Player, eventRequest)
+function EventIngestionHandler:addServerEvent(player: Player, eventRequest: Types.EventRequest)
   if not self.isServer then error("Server only function") end
   self.serverEventStream:Fire(player, eventRequest)
 end
 
-function EventIngestionHandler:addClientEvent(eventRequest)
+function EventIngestionHandler:addClientEvent(eventRequest: Types.EventRequest)
   if self.isServer then error("Client only function") end
   self.clientEventStream:FireServer(eventRequest)
 end

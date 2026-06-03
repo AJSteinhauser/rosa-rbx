@@ -2,6 +2,7 @@ local HttpService           = game:GetService("HttpService")
 local SessionManager        = require(script.Parent["session-manager"])
 local PlayerPlatformManager = require(script.Parent["player-platform-manager"])
 local Helpers               = require(script.Parent.Parent.utils.helpers)
+local Types                 = require(script.Parent.types)
 
 -- Builds a complete Event table from a lightweight EventRequest.
 -- Resolves position, platform, session ID, and version automatically.
@@ -27,7 +28,7 @@ end
 
 -- May yield while waiting for the client to report their platform.
 -- Call this from inside a task.spawn'd coroutine.
-function EventBuilder:buildEvent(player: Player, eventRequest)
+function EventBuilder:buildEvent(player: Player, eventRequest: Types.EventRequest)
 	local rawPos = eventRequest.position or self.config.getPosition(player)
 	if not rawPos then return nil end
 	local position = Helpers.vector3ToPosition(rawPos)
