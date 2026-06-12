@@ -5,7 +5,7 @@ local Compressor   = require(script.Parent.compressor)
 local Signature    = require(script.Parent.signature)
 local ArrayUtils   = require(script.Parent.Parent.utils["array-manipulation"])
 local ApiUtils     = require(script.Parent.Parent.utils["api-utils"])
-local QuotaGate    = require(script.Parent["quota-gate"])
+local Blocker      = require(script.Parent["blocker"])
 local Constants    = require(script.Parent.Parent.Parent.models.constants)
 
 local instance = nil
@@ -21,14 +21,15 @@ function BatchHandler.new()
 	assert(instance == nil, "Only one instance of BatchHandler is allowed")
 	local self = setmetatable({}, BatchHandler)
 	self.accumulator  = Accumulator.new()
-	self.quotaGate    = QuotaGate.new()
+	self.quotaBlocker = Blocker.new("quota", Constants.QUOTA_BLOCKER_INTERVAL)
+	self.authBlocker  = Blocker.new("auth",  Constants.AUTH_BLOCKER_INTERVAL)
 	self._lastFlushAt = os.clock()
 	instance = self
 
 	RunService.Heartbeat:Connect(function()
 		if os.clock() - self._lastFlushAt >= Constants.HEARTBEAT_FLUSH_INTERVAL then
 			self._lastFlushAt = os.clock()
-			if not self.quotaGate:isBlocked() then
+			if not self.quotaBlocker:isBlocked() and not self.authBlocker:isBlocked() then
 				self:flushIfNonEmpty()
 			end
 		end
@@ -49,7 +50,7 @@ function BatchHandler:flushIfNonEmpty()
 end
 
 function BatchHandler:addEvent(event)
-	if self.quotaGate:isBlocked() then return end
+	if self.quotaBlocker:isBlocked() or self.authBlocker:isBlocked() then return end
 	local readyToFlush = self.accumulator:addEvent(event)
 	if readyToFlush then
 		self:sendEventBuffer(self.accumulator:flushEvents())
@@ -74,7 +75,11 @@ function BatchHandler:sendEventBuffer(buff: buffer)
 		local response, attemptCount = ApiUtils.sendRetryHandler(request)
 		if not response.Success then
 			if response.StatusCode == 403 then
-				self.quotaGate:onQuotaExceeded()
+				self.quotaBlocker:onBlocked()
+				return
+			end
+			if response.StatusCode == 401 then
+				self.authBlocker:onBlocked()
 				return
 			end
 			error(string.format(
@@ -82,7 +87,8 @@ function BatchHandler:sendEventBuffer(buff: buffer)
 				response.StatusCode, attemptCount, response.StatusMessage, response.Body
 			))
 		end
-		self.quotaGate:onSuccess()
+		self.quotaBlocker:onSuccess()
+		self.authBlocker:onSuccess()
 		if attemptCount > 1 then
 			warn(`ROSA API request succeeded after {attemptCount} attempts`)
 		end

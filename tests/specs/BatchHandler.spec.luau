@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService       = game:GetService("HttpService")
 local BatchHandler      = require(ReplicatedStorage.RosaRbxPipeline.egress.components["batch-event-handler"])
-local QuotaGate         = require(ReplicatedStorage.RosaRbxPipeline.egress.components["quota-gate"])
+local Blocker           = require(ReplicatedStorage.RosaRbxPipeline.egress.components["blocker"])
 local splitArrayInHalf  = require(ReplicatedStorage.RosaRbxPipeline.egress.utils["array-manipulation"]).splitArrayInHalf
 
 local function makeEvent(tag: string?)
@@ -27,6 +27,12 @@ local function drainEvents(handler): { any }
 	local buff = handler.accumulator:flushEvents()
 	local json = buffer.readstring(buff, 0, buffer.len(buff))
 	return HttpService:JSONDecode(json)
+end
+
+local function makeBlocker(probeInterval)
+	local time = 0
+	local b    = Blocker.new("test", probeInterval or 100, function() return time end)
+	return b, function(t) time = t end
 end
 
 return function()
@@ -55,41 +61,37 @@ return function()
 			end)
 		end)
 
-		describe("quota gate", function()
-			it("discards addEvent calls while gate is blocked", function()
+		describe("quota blocker (403)", function()
+			it("discards addEvent calls while blocked", function()
 				local handler = getHandler()
 				if not handler then return end
 
-				local originalGate = handler.quotaGate
-				handler.quotaGate = QuotaGate.new(function() return 0 end, 100)
+				local original       = handler.quotaBlocker
+				handler.quotaBlocker = Blocker.new("quota", 100, function() return 0 end)
 
 				drainEvents(handler)
-				handler.quotaGate:onQuotaExceeded()
-
+				handler.quotaBlocker:onBlocked()
 				handler:addEvent(makeEvent("ShouldBeDiscarded"))
 
 				local events = drainEvents(handler)
-				handler.quotaGate = originalGate
+				handler.quotaBlocker = original
 
 				expect(#events).to.equal(0)
 			end)
 
-			it("discards all events, not just the first, while blocked", function()
+			it("discards all events while blocked, not just the first", function()
 				local handler = getHandler()
 				if not handler then return end
 
-				local originalGate = handler.quotaGate
-				handler.quotaGate = QuotaGate.new(function() return 0 end, 100)
+				local original       = handler.quotaBlocker
+				handler.quotaBlocker = Blocker.new("quota", 100, function() return 0 end)
 
 				drainEvents(handler)
-				handler.quotaGate:onQuotaExceeded()
-
-				for i = 1, 5 do
-					handler:addEvent(makeEvent("Event" .. i))
-				end
+				handler.quotaBlocker:onBlocked()
+				for i = 1, 5 do handler:addEvent(makeEvent("Event" .. i)) end
 
 				local events = drainEvents(handler)
-				handler.quotaGate = originalGate
+				handler.quotaBlocker = original
 
 				expect(#events).to.equal(0)
 			end)
@@ -98,111 +100,213 @@ return function()
 				local handler = getHandler()
 				if not handler then return end
 
-				local originalGate = handler.quotaGate
-				handler.quotaGate = QuotaGate.new(function() return 0 end, 100)
+				local original       = handler.quotaBlocker
+				handler.quotaBlocker = Blocker.new("quota", 100, function() return 0 end)
 
 				drainEvents(handler)
-				handler.quotaGate:onQuotaExceeded()
-
+				handler.quotaBlocker:onBlocked()
 				handler:addEvent(makeEvent("A"))
 				handler:addEvent(makeEvent("B"))
-				handler:addEvent(makeEvent("C"))
 
 				expect(handler.accumulator.isEmpty).to.equal(true)
-				handler.quotaGate = originalGate
+				handler.quotaBlocker = original
 			end)
 
-			it("pre-block events already in the accumulator flush with the probe", function()
-				local handler = getHandler()
+			it("pre-block events flush together with the probe", function()
+				local handler          = getHandler()
 				if not handler then return end
 
-				local time        = 0
-				local originalGate = handler.quotaGate
-				handler.quotaGate = QuotaGate.new(function() return time end, 100)
+				local blocker, setTime = makeBlocker()
+				local original         = handler.quotaBlocker
+				handler.quotaBlocker   = blocker
 
 				drainEvents(handler)
-
-				-- Events enter the accumulator before the 403 is processed (async race)
 				handler:addEvent(makeEvent("PreBlock"))
-				-- 403 arrives asynchronously and sets the gate
-				handler.quotaGate:onQuotaExceeded()
-
-				-- Events during the block are discarded
+				blocker:onBlocked()
 				handler:addEvent(makeEvent("Discarded"))
-
-				-- Probe window opens; next event passes through
-				time = 100
+				setTime(100)
 				handler:addEvent(makeEvent("Probe"))
 
 				local events = drainEvents(handler)
-				handler.quotaGate = originalGate
+				handler.quotaBlocker = original
 
-				-- PreBlock is still in the accumulator; both it and Probe flush together
 				expect(#events).to.equal(2)
 				expect(events[1].tag).to.equal("PreBlock")
 				expect(events[2].tag).to.equal("Probe")
 			end)
 
 			it("allows events once the probe interval elapses", function()
-				local handler = getHandler()
+				local handler          = getHandler()
 				if not handler then return end
 
-				local time        = 0
-				local originalGate = handler.quotaGate
-				handler.quotaGate = QuotaGate.new(function() return time end, 100)
+				local blocker, setTime = makeBlocker()
+				local original         = handler.quotaBlocker
+				handler.quotaBlocker   = blocker
 
 				drainEvents(handler)
-				time = 0
-				handler.quotaGate:onQuotaExceeded()
+				blocker:onBlocked()
 				handler:addEvent(makeEvent("Discarded"))
-
-				time = 100 -- probe window opens
+				setTime(100)
 				handler:addEvent(makeEvent("ProbeEvent"))
 
 				local events = drainEvents(handler)
-				handler.quotaGate = originalGate
+				handler.quotaBlocker = original
 
 				expect(#events).to.equal(1)
 				expect(events[1].tag).to.equal("ProbeEvent")
 			end)
 
-			it("resumes normal ingestion after gate is restored", function()
-				local handler = getHandler()
+			it("resumes after onSuccess", function()
+				local handler        = getHandler()
 				if not handler then return end
 
-				local originalGate = handler.quotaGate
-				handler.quotaGate = QuotaGate.new(function() return 0 end, 100)
+				local original       = handler.quotaBlocker
+				handler.quotaBlocker = Blocker.new("quota", 100, function() return 0 end)
 
 				drainEvents(handler)
-				handler.quotaGate:onQuotaExceeded()
-				handler.quotaGate:onSuccess() -- simulate successful probe response
-
+				handler.quotaBlocker:onBlocked()
+				handler.quotaBlocker:onSuccess()
 				handler:addEvent(makeEvent("PostRecovery"))
 
 				local events = drainEvents(handler)
-				handler.quotaGate = originalGate
+				handler.quotaBlocker = original
 
 				expect(#events).to.equal(1)
 				expect(events[1].tag).to.equal("PostRecovery")
 			end)
 
-			it("discards again if a second 403 arrives after recovery", function()
-				local handler = getHandler()
+			it("blocks again after a second 403", function()
+				local handler        = getHandler()
 				if not handler then return end
 
-				local time        = 0
-				local originalGate = handler.quotaGate
-				handler.quotaGate = QuotaGate.new(function() return time end, 100)
+				local original       = handler.quotaBlocker
+				handler.quotaBlocker = Blocker.new("quota", 100, function() return 0 end)
 
 				drainEvents(handler)
-				handler.quotaGate:onQuotaExceeded()
-				handler.quotaGate:onSuccess() -- recovered
-				handler.quotaGate:onQuotaExceeded() -- hit 403 again
-
+				handler.quotaBlocker:onBlocked()
+				handler.quotaBlocker:onSuccess()
+				handler.quotaBlocker:onBlocked()
 				handler:addEvent(makeEvent("ShouldBeDiscarded"))
 
 				local events = drainEvents(handler)
-				handler.quotaGate = originalGate
+				handler.quotaBlocker = original
+
+				expect(#events).to.equal(0)
+			end)
+		end)
+
+		describe("auth blocker (401)", function()
+			it("discards addEvent calls while blocked", function()
+				local handler = getHandler()
+				if not handler then return end
+
+				local original      = handler.authBlocker
+				handler.authBlocker = Blocker.new("auth", 100, function() return 0 end)
+
+				drainEvents(handler)
+				handler.authBlocker:onBlocked()
+				handler:addEvent(makeEvent("ShouldBeDiscarded"))
+
+				local events = drainEvents(handler)
+				handler.authBlocker = original
+
+				expect(#events).to.equal(0)
+			end)
+
+			it("discards all events while blocked, not just the first", function()
+				local handler = getHandler()
+				if not handler then return end
+
+				local original      = handler.authBlocker
+				handler.authBlocker = Blocker.new("auth", 100, function() return 0 end)
+
+				drainEvents(handler)
+				handler.authBlocker:onBlocked()
+				for i = 1, 5 do handler:addEvent(makeEvent("Event" .. i)) end
+
+				local events = drainEvents(handler)
+				handler.authBlocker = original
+
+				expect(#events).to.equal(0)
+			end)
+
+			it("allows events once the probe interval elapses", function()
+				local handler          = getHandler()
+				if not handler then return end
+
+				local blocker, setTime = makeBlocker()
+				local original         = handler.authBlocker
+				handler.authBlocker    = blocker
+
+				drainEvents(handler)
+				blocker:onBlocked()
+				handler:addEvent(makeEvent("Discarded"))
+				setTime(100)
+				handler:addEvent(makeEvent("ProbeEvent"))
+
+				local events = drainEvents(handler)
+				handler.authBlocker = original
+
+				expect(#events).to.equal(1)
+				expect(events[1].tag).to.equal("ProbeEvent")
+			end)
+
+			it("resumes after onSuccess", function()
+				local handler       = getHandler()
+				if not handler then return end
+
+				local original      = handler.authBlocker
+				handler.authBlocker = Blocker.new("auth", 100, function() return 0 end)
+
+				drainEvents(handler)
+				handler.authBlocker:onBlocked()
+				handler.authBlocker:onSuccess()
+				handler:addEvent(makeEvent("PostRecovery"))
+
+				local events = drainEvents(handler)
+				handler.authBlocker = original
+
+				expect(#events).to.equal(1)
+				expect(events[1].tag).to.equal("PostRecovery")
+			end)
+
+			it("auth blocker blocks independently of quota blocker", function()
+				local handler = getHandler()
+				if not handler then return end
+
+				local origAuth  = handler.authBlocker
+				local origQuota = handler.quotaBlocker
+				handler.authBlocker  = Blocker.new("auth",  100, function() return 0 end)
+				handler.quotaBlocker = Blocker.new("quota", 100, function() return 0 end)
+
+				drainEvents(handler)
+				handler.authBlocker:onBlocked()
+				handler:addEvent(makeEvent("BlockedByAuth"))
+
+				local events = drainEvents(handler)
+				handler.authBlocker  = origAuth
+				handler.quotaBlocker = origQuota
+
+				expect(#events).to.equal(0)
+			end)
+
+			it("both blockers active still discards events", function()
+				local handler = getHandler()
+				if not handler then return end
+
+				local origAuth  = handler.authBlocker
+				local origQuota = handler.quotaBlocker
+				handler.authBlocker  = Blocker.new("auth",  100, function() return 0 end)
+				handler.quotaBlocker = Blocker.new("quota", 100, function() return 0 end)
+
+				drainEvents(handler)
+				handler.authBlocker:onBlocked()
+				handler.quotaBlocker:onBlocked()
+				handler:addEvent(makeEvent("BlockedByBoth"))
+
+				local events = drainEvents(handler)
+				handler.authBlocker  = origAuth
+				handler.quotaBlocker = origQuota
 
 				expect(#events).to.equal(0)
 			end)
@@ -211,9 +315,7 @@ return function()
 		describe("split logic (via array-manipulation)", function()
 			it("splits a 4-event JSON buffer into two equal halves", function()
 				local events = {}
-				for i = 1, 4 do
-					table.insert(events, makeEvent("Event" .. i))
-				end
+				for i = 1, 4 do table.insert(events, makeEvent("Event" .. i)) end
 				local decoded = HttpService:JSONDecode(HttpService:JSONEncode(events))
 				local halfA, halfB = splitArrayInHalf(decoded)
 				expect(#halfA).to.equal(2)
@@ -224,9 +326,7 @@ return function()
 
 			it("handles an odd number of events — right half is larger", function()
 				local events = {}
-				for i = 1, 5 do
-					table.insert(events, makeEvent("E" .. i))
-				end
+				for i = 1, 5 do table.insert(events, makeEvent("E" .. i)) end
 				local halfA, halfB = splitArrayInHalf(events)
 				expect(#halfA).to.equal(2)
 				expect(#halfB).to.equal(3)
@@ -234,9 +334,7 @@ return function()
 
 			it("JSON round-trip preserves event data in each half", function()
 				local events = {}
-				for i = 1, 6 do
-					table.insert(events, makeEvent("Tag" .. i))
-				end
+				for i = 1, 6 do table.insert(events, makeEvent("Tag" .. i)) end
 				local halfA, halfB = splitArrayInHalf(events)
 				local reA = HttpService:JSONDecode(HttpService:JSONEncode(halfA))
 				local reB = HttpService:JSONDecode(HttpService:JSONEncode(halfB))
