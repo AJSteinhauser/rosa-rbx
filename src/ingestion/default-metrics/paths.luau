@@ -5,18 +5,17 @@ local HttpService = game:GetService("HttpService")
 local SAMPLE_RATE         = 0.1
 local DISTANCE_THRESHOLD  = 10   -- studs
 local TELEPORT_THRESHOLD  = 100  -- studs; jump beyond this = new path segment
-local TIME_FALLBACK       = 4    -- seconds
 local DIRECTION_THRESHOLD = 35   -- degrees
 local MIN_TAG_INTERVAL    = 0.1  -- seconds between emitted _PathTag events
 
 return function(handler, userConfig)
-	local tracked = {} -- [Player] = { lastPos, lastDir, lastTime, lastTagTime, segmentId }
+	local tracked = {} -- [Player] = { lastPos, lastDir, lastTagTime, segmentId }
 
 	local function beginTracking(player: Player)
 		local pos = userConfig.getPosition(player)
 		if not pos then return end
 		local segmentId = HttpService:GenerateGUID(false)
-		tracked[player] = { lastPos = pos, lastDir = nil, lastTime = os.clock(), lastTagTime = os.clock(), segmentId = segmentId }
+		tracked[player] = { lastPos = pos, lastDir = nil, lastTagTime = os.clock(), segmentId = segmentId }
 		handler:addServerEvent(player, { tag = "_PathStart", position = pos, custom = { segmentId = segmentId } })
 	end
 
@@ -35,7 +34,6 @@ return function(handler, userConfig)
 				state.segmentId   = segmentId
 				state.lastPos     = currentPos
 				state.lastDir     = nil
-				state.lastTime    = now
 				state.lastTagTime = now
 				handler:addServerEvent(player, { tag = "_PathStart", position = currentPos, custom = { segmentId = segmentId } })
 				continue
@@ -48,11 +46,9 @@ return function(handler, userConfig)
 				directionChanged = angleDeg >= DIRECTION_THRESHOLD
 			end
 
-			local elapsed = now - state.lastTime
-			if distance >= DISTANCE_THRESHOLD or directionChanged or elapsed >= TIME_FALLBACK then
+			if distance >= DISTANCE_THRESHOLD or directionChanged then
 				state.lastPos  = currentPos
 				state.lastDir  = distance > 0.1 and delta.Unit or state.lastDir
-				state.lastTime = now
 				if now - state.lastTagTime >= MIN_TAG_INTERVAL then
 					handler:addServerEvent(player, { tag = "_PathTag", position = currentPos, custom = { segmentId = state.segmentId } })
 					state.lastTagTime = now

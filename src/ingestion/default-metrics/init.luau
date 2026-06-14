@@ -18,30 +18,28 @@
 -- Client groups (run in LocalScript context):
 --   proximityPromptShown — ProximityPromptShown (custom.promptName, distanceToPrompt, inputType; position)
 --   inputMethodChanged   — InputMethodChanged (custom.fromInput, custom.toInput; position)
---   socialEvents         — FriendRequestSent (custom.distanceStuds, serverOccupancy), FriendRequestReceived
 --   clientPerformance    — FpsSample (quantity = fps; every 30s; off by default)
 --   settingsEvents       — SettingsOpened
 --
 -- All groups default to enabled unless noted. Set a group to false to disable:
 --   defaultMetrics = { characterEvents = false }
 
-local setupPlayerEvents       = require(script["player-events"])
-local setupCharacterEvents    = require(script["character-events"])
+local setupPlayerEvents        = require(script["player-events"])
+local setupCharacterEvents     = require(script["character-events"])
 local setupHumanoidStateEvents = require(script["humanoid-state-events"])
-local setupPaths              = require(script["paths"])
-local setupProximityEvents    = require(script["proximity-events"])
-local setupToolEvents         = require(script["tool-events"])
-local setupDamageEvents       = require(script["damage-events"])
-local setupIdleDetection      = require(script["idle-detection"])
-local setupMarketplace        = require(script["marketplace-events"])
-local setupChatEvents         = require(script["chat-events"])
-local setupTeamEvents         = require(script["team-events"])
-local setupJumpEvents         = require(script["jump-events"])
+local setupPaths               = require(script["paths"])
+local setupProximityEvents     = require(script["proximity-events"])
+local setupToolEvents          = require(script["tool-events"])
+local setupDamageEvents        = require(script["damage-events"])
+local setupIdleDetection       = require(script["idle-detection"])
+local setupMarketplace         = require(script["marketplace-events"])
+local setupChatEvents          = require(script["chat-events"])
+local setupTeamEvents          = require(script["team-events"])
+local setupJumpEvents          = require(script["jump-events"])
 local setupProximityPromptShown = require(script["proximity-prompt-shown"])
-local setupInputMethodChanged = require(script["input-method-changed"])
-local setupSocialEvents       = require(script["social-events"])
-local setupClientPerf         = require(script["client-performance"])
-local setupSettingsEvents     = require(script["settings-events"])
+local setupInputMethodChanged  = require(script["input-method-changed"])
+local setupClientPerf          = require(script["client-performance"])
+local setupSettingsEvents      = require(script["settings-events"])
 
 local DefaultMetrics = {}
 
@@ -83,17 +81,11 @@ function DefaultMetrics.setup(handler, config, userConfig, _services)
 		setupJumpEvents(handler, _services)
 	end
 
-	-- Register client-side default metric tags so they pass through the whitelist
-	-- even when the user has whitelistedEventTags configured.
 	if config.proximityPromptShown ~= false then
 		handler:allowClientTag("ProximityPromptShown")
 	end
 	if config.inputMethodChanged ~= false then
 		handler:allowClientTag("InputMethodChanged")
-	end
-	if config.socialEvents ~= false then
-		handler:allowClientTag("FriendRequestSent")
-		handler:allowClientTag("FriendRequestReceived")
 	end
 	if config.settingsEvents ~= false then
 		handler:allowClientTag("SettingsOpened")
@@ -109,9 +101,6 @@ function DefaultMetrics.setupClient(handler, config, _services)
 	end
 	if config.inputMethodChanged ~= false then
 		setupInputMethodChanged(handler, _services)
-	end
-	if config.socialEvents ~= false then
-		setupSocialEvents(handler, _services)
 	end
 	if config.clientPerformance == true then
 		setupClientPerf(handler, _services)

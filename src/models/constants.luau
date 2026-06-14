@@ -13,7 +13,7 @@ local AUTH_BLOCKER_INTERVAL  = 30 * 60 -- 30 minutes
 
 local SECRETS_KEY_LOOKUP = "ROSA-API-KEY"
 
-local DEV_MODE = false
+local DEV_MODE = true
 local INGESTION_BASE_API_ROUTE = "https://api.rosaanalytic.com"
 local INGESTION_LOCAL_BASE_API_ROUTE = "http://127.0.0.1:3000"
 
