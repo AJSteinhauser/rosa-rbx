@@ -12,7 +12,7 @@
 --   idleDetection        — PlayerIdle (quantity = idleDuration; tune with idleThresholdSeconds)
 --   marketplaceEvents    — ProductPurchased, ProductDeclined, GamePassPurchased, GamePassDeclined
 --   chatEvents           — ChatMessage
---   teamEvents           — TeamChanged
+--   teamEvents           — TeamChanged (teamId = new team name)
 --   jumpEvents           — PlayerJump
 --
 -- Client groups (run in LocalScript context):

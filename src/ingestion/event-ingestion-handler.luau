@@ -39,8 +39,9 @@ function EventIngestionHandler.new(userConfig)
 		end
 	end
 
-	self.userConfig = userConfig
-	self.isServer   = RunService:IsServer()
+	self.userConfig            = userConfig
+	self.customPlayerDataHook  = userConfig.customPlayerDataHook
+	self.isServer              = RunService:IsServer()
 
 	if self.isServer then
 		-- Create streams before setting up connections so they exist when listeners fire
@@ -95,6 +96,18 @@ end
 function EventIngestionHandler:registerEvent(player: Player, eventRequest: Types.EventRequest)
   if not self.isServer then error("Server only function") end
 	task.spawn(function()
+		if self.customPlayerDataHook then
+			local hookData = self.customPlayerDataHook(player)
+			if hookData and typeof(hookData) == "table" then
+				local merged = {}
+				for k, v in pairs(hookData) do merged[k] = v end
+				if eventRequest.custom then
+					for k, v in pairs(eventRequest.custom) do merged[k] = v end
+				end
+				eventRequest = table.clone(eventRequest)
+				eventRequest.custom = merged
+			end
+		end
 		local fullEvent = self.eventBuilder:buildEvent(player, eventRequest)
 		if not fullEvent then return end
 		TypeEnforcement.enforce(fullEvent)
