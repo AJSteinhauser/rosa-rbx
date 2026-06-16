@@ -1,14 +1,16 @@
 local HttpService = game:GetService("HttpService")
 local Constants = require(script.Parent.Parent.Parent.models.constants)
+local Version   = require(script.Parent.Parent.Parent.models.version)
 
 -- Generates HTTP headers for an API request.
 -- The api-secret is fetched from Roblox secrets (never exposed in plaintext).
 -- The idempotency-key prevents duplicate processing if the request is retried.
 local function generateHeader()
 	return {
-		["x-rosa-api-key"]      = HttpService:GetSecret(Constants.SECRETS_KEY_LOOKUP),
+		["x-rosa-api-key"]         = HttpService:GetSecret(Constants.SECRETS_KEY_LOOKUP),
 		["x-rosa-idempotency-key"] = HttpService:GenerateGUID(false),
-    ["content-type"]    = "application/octet-stream"
+		["x-rosa-module-version"]  = Version,
+		["content-type"]           = "application/octet-stream"
 	}
 end
 

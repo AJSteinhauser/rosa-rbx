@@ -36,8 +36,12 @@ function PlayerPlatformManager.new()
 	end)
 
 	Players.PlayerRemoving:Connect(function(player)
-		self.platformCache[player]   = nil
-		self.pendingRequests[player] = nil
+		self.platformCache[player] = nil
+		local thread = self.pendingRequests[player]
+		if thread then
+			self.pendingRequests[player] = nil
+			task.spawn(thread, "Unknown")
+		end
 	end)
 
 	return self

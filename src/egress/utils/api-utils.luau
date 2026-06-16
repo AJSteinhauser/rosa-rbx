@@ -15,7 +15,7 @@ local function sendRetryHandler(request: RequestAsyncRequest, attempts: number?)
 
 	if not response.Success then
 		if not ApiModels.RETRYABLE_HTTP_STATUS_CODES[response.StatusCode] then
-			return response, attempts
+			return response, attempts + 1
 		end
 		task.wait(2 ^ attempts)
 		return sendRetryHandler(request, attempts + 1)

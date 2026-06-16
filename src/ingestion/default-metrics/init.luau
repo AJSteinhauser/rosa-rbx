@@ -18,7 +18,6 @@
 -- Client groups (run in LocalScript context):
 --   proximityPromptShown — ProximityPromptShown (custom.promptName, distanceToPrompt, inputType; position)
 --   inputMethodChanged   — InputMethodChanged (custom.fromInput, custom.toInput; position)
---   clientPerformance    — FpsSample (quantity = fps; every 30s; off by default)
 --   settingsEvents       — SettingsOpened
 --
 -- All groups default to enabled unless noted. Set a group to false to disable:
@@ -38,7 +37,6 @@ local setupTeamEvents          = require(script["team-events"])
 local setupJumpEvents          = require(script["jump-events"])
 local setupProximityPromptShown = require(script["proximity-prompt-shown"])
 local setupInputMethodChanged  = require(script["input-method-changed"])
-local setupClientPerf          = require(script["client-performance"])
 local setupSettingsEvents      = require(script["settings-events"])
 
 local DefaultMetrics = {}
@@ -90,9 +88,6 @@ function DefaultMetrics.setup(handler, config, userConfig, _services)
 	if config.settingsEvents ~= false then
 		handler:allowClientTag("SettingsOpened")
 	end
-	if config.clientPerformance == true then
-		handler:allowClientTag("FpsSample")
-	end
 end
 
 function DefaultMetrics.setupClient(handler, config, _services)
@@ -101,9 +96,6 @@ function DefaultMetrics.setupClient(handler, config, _services)
 	end
 	if config.inputMethodChanged ~= false then
 		setupInputMethodChanged(handler, _services)
-	end
-	if config.clientPerformance == true then
-		setupClientPerf(handler, _services)
 	end
 	if config.settingsEvents ~= false then
 		setupSettingsEvents(handler, _services)

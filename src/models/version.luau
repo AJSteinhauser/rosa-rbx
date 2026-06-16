@@ -1,0 +1,2 @@
+-- Auto-generated from wally.toml — do not edit manually.
+return "0.1.0"
