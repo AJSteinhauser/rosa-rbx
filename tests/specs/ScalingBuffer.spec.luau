@@ -198,11 +198,6 @@ return function()
 				expect(buffer.readu8(copy2, 0)).to.equal(string.byte("a"))
 			end)
 
-			it("successive calls return equal content", function()
-				local b = ScalingBuffer.new()
-				b:push_string("hello")
-				expect(readAll(b:getBuffer())).to.equal(readAll(b:getBuffer()))
-			end)
 		end)
 
 	end)

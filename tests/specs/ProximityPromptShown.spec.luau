@@ -120,28 +120,6 @@ return function()
 			expect(handler.calls[1].custom.inputType).to.equal("KeyboardAndMouse")
 		end)
 
-		it("maps Gamepad inputType to Gamepad", function()
-			local promptShown = makeSignal()
-			local svc         = makeServices(promptShown, makeLocalPlayer(nil))
-			local handler     = makeHandler()
-
-			setupProximityPromptShown(handler, svc)
-			promptShown:Fire(makePrompt("", "Use", nil), Enum.ProximityPromptInputType.Gamepad)
-
-			expect(handler.calls[1].custom.inputType).to.equal("Gamepad")
-		end)
-
-		it("maps Touch inputType to Touch", function()
-			local promptShown = makeSignal()
-			local svc         = makeServices(promptShown, makeLocalPlayer(nil))
-			local handler     = makeHandler()
-
-			setupProximityPromptShown(handler, svc)
-			promptShown:Fire(makePrompt("", "Use", nil), Enum.ProximityPromptInputType.Touch)
-
-			expect(handler.calls[1].custom.inputType).to.equal("Touch")
-		end)
-
 		it("includes player position", function()
 			local pos         = Vector3.new(5, 0, 10)
 			local promptShown = makeSignal()

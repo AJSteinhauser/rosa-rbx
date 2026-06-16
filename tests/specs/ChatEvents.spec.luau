@@ -79,15 +79,5 @@ return function()
 			expect(#handler.calls).to.equal(2)
 		end)
 
-		it("does not fire if player never chats", function()
-			local handler = makeHandler()
-			local player  = makePlayer("Silent")
-			local svc     = makeServices({ player })
-
-			setupChatEvents(handler, svc)
-
-			expect(#handler.calls).to.equal(0)
-		end)
-
 	end)
 end

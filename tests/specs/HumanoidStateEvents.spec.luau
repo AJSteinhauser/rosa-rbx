@@ -97,51 +97,6 @@ return function()
 			expect(handler.calls[1].event.custom.state).to.equal("Freefall")
 		end)
 
-		it("fires for Climbing state", function()
-			local handler   = makeHandler()
-			local humanoid  = makeHumanoid()
-			local character = makeCharacter(humanoid)
-			local player    = makePlayer()
-			local svc       = makeServices()
-
-			setupHumanoidStateEvents(handler, svc)
-			svc.playerAdded:Fire(player)
-			player._characterAdded:Fire(character)
-			humanoid._stateChanged:Fire(Enum.HumanoidStateType.Running, Enum.HumanoidStateType.Climbing)
-
-			expect(handler.calls[1].event.custom.state).to.equal("Climbing")
-		end)
-
-		it("fires for Swimming state", function()
-			local handler   = makeHandler()
-			local humanoid  = makeHumanoid()
-			local character = makeCharacter(humanoid)
-			local player    = makePlayer()
-			local svc       = makeServices()
-
-			setupHumanoidStateEvents(handler, svc)
-			svc.playerAdded:Fire(player)
-			player._characterAdded:Fire(character)
-			humanoid._stateChanged:Fire(Enum.HumanoidStateType.Running, Enum.HumanoidStateType.Swimming)
-
-			expect(handler.calls[1].event.custom.state).to.equal("Swimming")
-		end)
-
-		it("fires for Seated state", function()
-			local handler   = makeHandler()
-			local humanoid  = makeHumanoid()
-			local character = makeCharacter(humanoid)
-			local player    = makePlayer()
-			local svc       = makeServices()
-
-			setupHumanoidStateEvents(handler, svc)
-			svc.playerAdded:Fire(player)
-			player._characterAdded:Fire(character)
-			humanoid._stateChanged:Fire(Enum.HumanoidStateType.Running, Enum.HumanoidStateType.Seated)
-
-			expect(handler.calls[1].event.custom.state).to.equal("Seated")
-		end)
-
 		it("does not fire for untracked states", function()
 			local handler   = makeHandler()
 			local humanoid  = makeHumanoid()

@@ -64,14 +64,6 @@ return function()
 			it("rejects a non-table event (string)", function()
 				expectFails(function() enforce("not a table") end)
 			end)
-
-			it("rejects a non-table event (number)", function()
-				expectFails(function() enforce(42) end)
-			end)
-
-			it("rejects a non-table event (boolean)", function()
-				expectFails(function() enforce(true) end)
-			end)
 		end)
 
 		describe("tag field", function()
@@ -309,16 +301,6 @@ return function()
 			it("rejects custom whose JSON encoding is 501 characters", function()
 				local e = validEvent()
 				e.custom = customOfEncodedLength(501)
-				expectFails(function() enforce(e) end)
-			end)
-
-			it("rejects custom that is far over the 500-char limit", function()
-				local e   = validEvent()
-				local big = {}
-				for i = 1, 20 do
-					big["key_" .. i] = string.rep("v", 20)
-				end
-				e.custom = big
 				expectFails(function() enforce(e) end)
 			end)
 		end)

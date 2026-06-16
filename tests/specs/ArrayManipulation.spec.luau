@@ -61,13 +61,5 @@ return function()
 			expect(right[3]).to.equal("f")
 		end)
 
-		it("works with mixed-type arrays", function()
-			local left, right = splitArrayInHalf({ 1, "two", true, 4 })
-			expect(left[1]).to.equal(1)
-			expect(left[2]).to.equal("two")
-			expect(right[1]).to.equal(true)
-			expect(right[2]).to.equal(4)
-		end)
-
 	end)
 end

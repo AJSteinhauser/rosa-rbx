@@ -58,7 +58,7 @@ return function()
 
 			expect(#handler.calls).to.equal(1)
 			expect(handler.calls[1].event.tag).to.equal("TeamChanged")
-			expect(handler.calls[1].event.custom.team).to.equal("Red")
+			expect(handler.calls[1].event.custom.formerTeam).to.equal("None")
 		end)
 
 		it("fires TeamChanged with 'None' when team is removed", function()
@@ -72,7 +72,7 @@ return function()
 			player.Team = nil
 			player._teamChanged:Fire()
 
-			expect(handler.calls[1].event.custom.team).to.equal("None")
+			expect(handler.calls[1].event.custom.formerTeam).to.equal("Blue")
 		end)
 
 		it("fires for players already in game at setup time", function()
@@ -85,7 +85,7 @@ return function()
 			player._teamChanged:Fire()
 
 			expect(#handler.calls).to.equal(1)
-			expect(handler.calls[1].event.custom.team).to.equal("Green")
+			expect(handler.calls[1].event.custom.formerTeam).to.equal("None")
 		end)
 
 		it("fires multiple times across team switches", function()
@@ -100,8 +100,8 @@ return function()
 			player._teamChanged:Fire()
 
 			expect(#handler.calls).to.equal(2)
-			expect(handler.calls[1].event.custom.team).to.equal("Red")
-			expect(handler.calls[2].event.custom.team).to.equal("Blue")
+			expect(handler.calls[1].event.custom.formerTeam).to.equal("None")
+			expect(handler.calls[2].event.custom.formerTeam).to.equal("Red")
 		end)
 
 	end)

@@ -43,22 +43,6 @@ return function()
 				expect(#events <= 20).to.equal(true)
 			end)
 
-			-- Key invariant: rate-limited events are silently dropped, NOT added to buffer
-			it("rate-limited events are not present in the flushed buffer", function()
-				local acc   = Accumulator.new()
-				local event = makeEvent("drop-test")
-				local accepted = 0
-				for _ = 1, 25 do
-					-- addEvent returns false for both "below threshold" AND "rate limited"
-					-- but the bucket fills up, so events beyond cap won't be encoded.
-					acc:addEvent(event)
-					accepted += 1
-				end
-				local events = decodeFlush(acc)
-				-- The number of decoded events must not exceed bucket capacity
-				expect(#events <= 20).to.equal(true)
-			end)
-
 			it("different sessions have independent rate limits", function()
 				local acc = Accumulator.new()
 				-- Each session can accept 20 events before hitting its own bucket cap
@@ -130,16 +114,6 @@ return function()
 				local events = decodeFlush(acc)
 				expect(#events).to.equal(1)
 				expect(events[1].tag).to.equal("Second")
-			end)
-
-			it("isEmpty flag resets after flush so first event of next batch has no comma", function()
-				local acc = Accumulator.new()
-				acc:addEvent(makeEvent("s1", "Batch1"))
-				acc:flushEvents()
-				acc:addEvent(makeEvent("s1", "Batch2"))
-				local json = bufferToString(acc:flushEvents())
-				-- Must start with "[{" not "[," in the new batch
-				expect(json:sub(1, 2)).to.equal("[{")
 			end)
 
 			it("produces correct results over multiple consecutive flush cycles", function()

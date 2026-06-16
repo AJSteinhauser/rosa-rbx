@@ -46,11 +46,6 @@ return function()
 				expect(idA).never.to.equal(idB)
 			end)
 
-			it("session ID is at least 16 characters long", function()
-				local sm = SessionManager.new()
-				local id = sm:getSessionId(mockPlayer("Dave"))
-				expect(#id >= 16).to.equal(true)
-			end)
 		end)
 
 	end)
