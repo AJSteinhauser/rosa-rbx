@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local SessionManager    = require(ReplicatedStorage.RosaRbxPipeline.ingestion["session-manager"])
+local SessionManager    = require(ReplicatedStorage.RosaRbx.ingestion["session-manager"])
 
 -- SessionManager only uses player as a table key — a plain table works.
 local function mockPlayer(name: string)

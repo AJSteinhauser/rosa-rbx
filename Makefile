@@ -5,10 +5,10 @@ TEST_PLACE := $(DIST_DIR)/test-place.rbxl
 PACKAGE    := $(DIST_DIR)/rosa.rbxm
 
 help:
-	@echo "Rosa RBX Pipeline"
+	@echo "Rosa RBX"
 	@echo ""
 	@echo "  make install      Install Wally dependencies and configure git hooks"
-	@echo "  make build        Build the distributable .rbxm package"
+	@echo "  make build        Build the distributable .rbxm model"
 	@echo "  make test-place   Build a Roblox place for running tests in Studio"
 	@echo "  make release      Build and publish a GitHub release (version from wally.toml)"
 	@echo "  make clean        Remove all build artifacts"
@@ -23,7 +23,7 @@ $(DIST_DIR):
 	mkdir -p $(DIST_DIR)
 
 build: install $(DIST_DIR)
-	rojo build default.project.json --output $(PACKAGE)
+	rojo build model.project.json --output $(PACKAGE)
 	@echo "Built: $(PACKAGE)"
 
 test-place: install $(DIST_DIR)

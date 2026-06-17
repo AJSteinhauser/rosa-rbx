@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local EncodingService   = game:GetService("EncodingService")
-local Compressor        = require(ReplicatedStorage.RosaRbxPipeline.egress.components.compressor)
+local Compressor        = require(ReplicatedStorage.RosaRbx.egress.components.compressor)
 
 local HTTPS_BODY_LIMIT = 1024 * 1000 - 1
 

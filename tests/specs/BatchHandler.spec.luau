@@ -1,8 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService       = game:GetService("HttpService")
-local BatchHandler      = require(ReplicatedStorage.RosaRbxPipeline.egress.components["batch-event-handler"])
-local Blocker           = require(ReplicatedStorage.RosaRbxPipeline.egress.components["blocker"])
-local splitArrayInHalf  = require(ReplicatedStorage.RosaRbxPipeline.egress.utils["array-manipulation"]).splitArrayInHalf
+local BatchHandler      = require(ReplicatedStorage.RosaRbx.egress.components["batch-event-handler"])
+local Blocker           = require(ReplicatedStorage.RosaRbx.egress.components["blocker"])
+local splitArrayInHalf  = require(ReplicatedStorage.RosaRbx.egress.utils["array-manipulation"]).splitArrayInHalf
 
 local function makeEvent(tag: string?)
 	return {

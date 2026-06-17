@@ -1,5 +1,5 @@
 local ReplicatedStorage    = game:GetService("ReplicatedStorage")
-local setupCharacterEvents = require(ReplicatedStorage.RosaRbxPipeline.ingestion["default-metrics"]["character-events"])
+local setupCharacterEvents = require(ReplicatedStorage.RosaRbx.ingestion["default-metrics"]["character-events"])
 
 local function makeSignal()
 	local cbs = {}

@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Constants = require(ReplicatedStorage.RosaRbxPipeline.models.constants)
-local ApiModels = require(ReplicatedStorage.RosaRbxPipeline.egress.models.api)
+local Constants = require(ReplicatedStorage.RosaRbx.models.constants)
+local ApiModels = require(ReplicatedStorage.RosaRbx.egress.models.api)
 
 return function()
 	describe("Constants", function()

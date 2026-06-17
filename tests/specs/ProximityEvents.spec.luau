@@ -1,5 +1,5 @@
 local ReplicatedStorage    = game:GetService("ReplicatedStorage")
-local setupProximityEvents = require(ReplicatedStorage.RosaRbxPipeline.ingestion["default-metrics"]["proximity-events"])
+local setupProximityEvents = require(ReplicatedStorage.RosaRbx.ingestion["default-metrics"]["proximity-events"])
 
 local function makeSignal()
 	local cbs = {}

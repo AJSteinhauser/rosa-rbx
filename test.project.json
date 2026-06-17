@@ -1,10 +1,10 @@
 {
-  "name": "rosa-rbx-pipeline-tests",
+  "name": "rosa-rbx-tests",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "RosaRbxPipeline": {
+      "RosaRbx": {
         "$path": "src"
       },
       "Packages": {

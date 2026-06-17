@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Helpers           = require(ReplicatedStorage.RosaRbxPipeline.utils.helpers)
+local Helpers           = require(ReplicatedStorage.RosaRbx.utils.helpers)
 
 return function()
 	describe("helpers.vector3ToPosition()", function()

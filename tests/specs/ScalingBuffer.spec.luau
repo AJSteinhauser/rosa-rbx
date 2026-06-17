@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ScalingBuffer = require(ReplicatedStorage.RosaRbxPipeline.utils["scaling-buffer"])
+local ScalingBuffer = require(ReplicatedStorage.RosaRbx.utils["scaling-buffer"])
 
 local function readAll(buf: buffer): string
 	return buffer.readstring(buf, 0, buffer.len(buf))

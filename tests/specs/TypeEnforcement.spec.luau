@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService       = game:GetService("HttpService")
-local enforce           = require(ReplicatedStorage.RosaRbxPipeline.ingestion["type-enforcement"]).enforce
+local enforce           = require(ReplicatedStorage.RosaRbx.ingestion["type-enforcement"]).enforce
 
 local function validEvent()
 	return {

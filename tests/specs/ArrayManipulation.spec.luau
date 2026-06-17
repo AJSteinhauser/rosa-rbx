@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local splitArrayInHalf  = require(ReplicatedStorage.RosaRbxPipeline.egress.utils["array-manipulation"]).splitArrayInHalf
+local splitArrayInHalf  = require(ReplicatedStorage.RosaRbx.egress.utils["array-manipulation"]).splitArrayInHalf
 
 return function()
 	describe("splitArrayInHalf()", function()

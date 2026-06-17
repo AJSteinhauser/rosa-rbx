@@ -1,5 +1,5 @@
 local ReplicatedStorage        = game:GetService("ReplicatedStorage")
-local setupHumanoidStateEvents = require(ReplicatedStorage.RosaRbxPipeline.ingestion["default-metrics"]["humanoid-state-events"])
+local setupHumanoidStateEvents = require(ReplicatedStorage.RosaRbx.ingestion["default-metrics"]["humanoid-state-events"])
 
 local function makeSignal()
 	local cbs = {}

@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local LeakyBucket = require(ReplicatedStorage.RosaRbxPipeline.utils["leaky-bucket"])
+local LeakyBucket = require(ReplicatedStorage.RosaRbx.utils["leaky-bucket"])
 
 return function()
 	describe("LeakyBucket", function()

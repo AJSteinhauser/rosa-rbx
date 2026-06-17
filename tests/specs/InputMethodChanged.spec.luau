@@ -1,5 +1,5 @@
 local ReplicatedStorage       = game:GetService("ReplicatedStorage")
-local setupInputMethodChanged = require(ReplicatedStorage.RosaRbxPipeline.ingestion["default-metrics"]["input-method-changed"])
+local setupInputMethodChanged = require(ReplicatedStorage.RosaRbx.ingestion["default-metrics"]["input-method-changed"])
 
 local function makeSignal()
 	local cbs = {}

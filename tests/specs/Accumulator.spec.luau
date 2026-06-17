@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService       = game:GetService("HttpService")
-local Accumulator       = require(ReplicatedStorage.RosaRbxPipeline.egress.components.accumulator)
+local Accumulator       = require(ReplicatedStorage.RosaRbx.egress.components.accumulator)
 
 local function makeEvent(sessionID: string?, tag: string?)
 	return {

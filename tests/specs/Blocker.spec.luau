@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Blocker           = require(ReplicatedStorage.RosaRbxPipeline.egress.components["blocker"])
+local Blocker           = require(ReplicatedStorage.RosaRbx.egress.components["blocker"])
 
 local function makeBlocker(probeInterval)
 	local time = 0

@@ -1,5 +1,5 @@
 local ReplicatedStorage  = game:GetService("ReplicatedStorage")
-local setupIdleDetection = require(ReplicatedStorage.RosaRbxPipeline.ingestion["default-metrics"]["idle-detection"])
+local setupIdleDetection = require(ReplicatedStorage.RosaRbx.ingestion["default-metrics"]["idle-detection"])
 
 local function makeSignal()
 	local cbs = {}
