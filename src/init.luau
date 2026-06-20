@@ -33,6 +33,7 @@ local Rosa = require(script.ingestion["event-ingestion-handler"]).new({
         proximityEvents       = true,   -- PromptTriggered (ProximityPrompt activations)
         chatEvents            = true,   -- ChatMessage
         teamEvents            = true,   -- TeamChanged
+        humanoidStateEvents   = false,  -- HumanoidStateChange (Landed/Freefall/Climbing/Swimming/Seated) [Creates a lot of events]
         paths                 = true,   -- _PathStart, _PathTag (10% sample, used for heatmaps)
     },
 
