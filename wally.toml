@@ -1,8 +1,10 @@
 [package]
 name = "ajsteinhauser/rosa-rbx"
-version = "0.2.2"
+version = "0.2.3"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
+homepage = "https://rosaanalytic.com/"
+authors = ["AJ Steinhauser <support@rosaanalytic.com"]
 
 [dependencies]
 

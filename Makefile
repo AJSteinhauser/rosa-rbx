@@ -40,6 +40,7 @@ release: build
 		exit 1; \
 	fi; \
 	gh release create "$$TAG" $(PACKAGE) --title "$$TAG" --generate-notes; \
+	wally publish; \
 	echo "Released: $$TAG"
 
 clean:
