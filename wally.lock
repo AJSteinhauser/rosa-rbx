@@ -4,7 +4,7 @@ registry = "test"
 
 [[package]]
 name = "ajsteinhauser/rosa-rbx"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [["testez", "roblox/testez@0.4.1"]]
 
 [[package]]
