@@ -1,9 +1,10 @@
 [package]
 name = "ajsteinhauser/rosa-rbx"
-version = "0.2.3"
+version = "0.2.4"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 homepage = "https://rosaanalytic.com/"
+description = "Rosa event logging and exfil library. Automatically tracks many Roblox events + API for tracking custom events"
 authors = ["AJ Steinhauser <support@rosaanalytic.com"]
 
 [dependencies]

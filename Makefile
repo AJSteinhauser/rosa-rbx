@@ -41,6 +41,7 @@ release: build
 	fi; \
 	gh release create "$$TAG" $(PACKAGE) --title "$$TAG" --generate-notes; \
 	wally publish; \
+	git add wally.lock && git commit -m "Wally publish $$TAG"; \
 	echo "Released: $$TAG"
 
 clean:
