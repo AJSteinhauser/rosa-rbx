@@ -46,6 +46,10 @@ local Rosa = require(script.ingestion["event-ingestion-handler"]).new({
         whitelistedEventTags = { "ButtonPress" },
     },
 
+    -- ── STUDIO SETTINGS ──────────────────────────────────────────────────────
+    -- Events are NOT recorded in Studio by default. Set to true to enable.
+    logStudioEvents = false,
+
     -- ── OPTIONAL OVERRIDES ────────────────────────────────────────────────────
     -- Rosa has sensible defaults for all of these. Only uncomment what you need.
 

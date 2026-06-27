@@ -42,6 +42,8 @@ function EventIngestionHandler.new(userConfig)
 	self.userConfig            = userConfig
 	self.customPlayerDataHook  = userConfig.customPlayerDataHook
 	self.isServer              = RunService:IsServer()
+	self.logStudioEvents       = userConfig.logStudioEvents == true
+	self.isStudio              = RunService:IsStudio()
 
 	if self.isServer then
 		-- Create streams before setting up connections so they exist when listeners fire
@@ -95,6 +97,7 @@ end
 -- Platform detection may yield, so this must not run on the main thread.
 function EventIngestionHandler:registerEvent(player: Player, eventRequest: Types.EventRequest)
   if not self.isServer then error("Server only function") end
+  if self.isStudio and not self.logStudioEvents then return end
 	task.spawn(function()
 		if self.customPlayerDataHook then
 			local hookData = self.customPlayerDataHook(player)
