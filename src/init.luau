@@ -5,7 +5,7 @@
 	from a ServerScript and a LocalScript — Rosa detects the context automatically.
 
 	SETUP:
-	  1. Add your API key to Roblox secrets under the name "ROSA-API-KEY"
+	  1. Add your API key to Roblox secrets under the name "ROSA_API_KEY"
 	  2. Require this module in both a ServerScript and a LocalScript:
 	         local Rosa = require(path.to.Rosa)
 

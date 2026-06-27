@@ -11,7 +11,7 @@ local MAX_HTTP_RETRY_ATTEMPTS = 10
 local QUOTA_BLOCKER_INTERVAL = 5  * 60 -- 5 minutes
 local AUTH_BLOCKER_INTERVAL  = 30 * 60 -- 30 minutes
 
-local SECRETS_KEY_LOOKUP = "ROSA-API-KEY"
+local SECRETS_KEY_LOOKUP = "ROSA_API_KEY"
 
 local DEV_MODE = false
 local INGESTION_BASE_API_ROUTE = "https://api.rosaanalytic.com"
