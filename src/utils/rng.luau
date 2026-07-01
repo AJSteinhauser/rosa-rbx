@@ -1,0 +1,29 @@
+-- Shared RNG for jitter (retry backoff, heartbeat flush, blocker probes).
+--
+-- Seeded per server instance so a fleet of servers booting at the same moment
+-- produces INDEPENDENT jitter sequences — that de-sync is the whole point of the
+-- jitter, and it only works if each instance draws from a different sequence.
+--
+-- Uses a dedicated Random object rather than math.randomseed(), which would mutate
+-- the global RNG state that the host game may depend on.
+--
+-- game.JobId is a unique GUID per live server, so its bytes make the seeds distinct
+-- even for servers that boot in the same millisecond. os.clock/os.time are folded in
+-- as a fallback for Studio, where JobId is an empty string.
+
+local jobId = game.JobId or ""
+
+local seed = os.time()
+for i = 1, #jobId do
+	seed = (seed * 31 + string.byte(jobId, i)) % 2147483647
+end
+seed = (seed + math.floor(os.clock() * 1e6)) % 2147483647
+
+local generator = Random.new(seed)
+
+return {
+	-- Returns a float in [0, 1), matching math.random().
+	next = function(): number
+		return generator:NextNumber()
+	end,
+}

@@ -5,7 +5,7 @@
 --   playerEvents         — PlayerJoin, PlayerLeave (quantity = sessionDuration)
 --   characterEvents      — CharacterSpawn, CharacterDeath
 --   humanoidStateEvents  — HumanoidStateChange (custom.state: Landed/Freefall/Climbing/Swimming/Seated)
---   paths                — _PathStart + _PathTag (10% sample; triggers: 10 studs, 35° turn, 4s fallback)
+--   paths                — _PathStart + _PathTag (5% sample; triggers: 25 studs, 45° turn)
 --   proximityEvents      — PromptTriggered (any ProximityPrompt activation)
 --   toolEvents           — ToolEquipped, ToolActivated
 --   damageEvents         — DamageTaken (quantity = damage; custom.healthPct)
@@ -13,7 +13,7 @@
 --   marketplaceEvents    — ProductPurchased, ProductDeclined, GamePassPurchased, GamePassDeclined
 --   chatEvents           — ChatMessage
 --   teamEvents           — TeamChanged (teamId = new team name)
---   jumpEvents           — PlayerJump
+--   jumpEvents           — PlayerJump (disabled by default; noisy, low value — opt in with jumpEvents = true)
 --
 -- Client groups (run in LocalScript context):
 --   proximityPromptShown — ProximityPromptShown (custom.promptName, distanceToPrompt, inputType; position)
@@ -22,6 +22,7 @@
 --
 -- All groups default to enabled unless noted. Set a group to false to disable:
 --   defaultMetrics = { characterEvents = false }
+-- jumpEvents is opt-in: defaultMetrics = { jumpEvents = true }
 
 local setupPlayerEvents        = require(script["player-events"])
 local setupCharacterEvents     = require(script["character-events"])
@@ -75,7 +76,7 @@ function DefaultMetrics.setup(handler, config, userConfig, _services)
 	if config.teamEvents ~= false then
 		setupTeamEvents(handler, _services)
 	end
-	if config.jumpEvents ~= false then
+	if config.jumpEvents == true then
 		setupJumpEvents(handler, _services)
 	end
 

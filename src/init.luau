@@ -34,7 +34,8 @@ local Rosa = require(script.ingestion["event-ingestion-handler"]).new({
         chatEvents            = true,   -- ChatMessage
         teamEvents            = true,   -- TeamChanged
         humanoidStateEvents   = false,  -- HumanoidStateChange (Landed/Freefall/Climbing/Swimming/Seated) [Creates a lot of events]
-        paths                 = true,   -- _PathStart, _PathTag (10% sample, used for heatmaps)
+        jumpEvents            = false,  -- PlayerJump [Creates a lot of events]
+        paths                 = true,   -- _PathStart, _PathTag (5% sample, used for heatmaps)
     },
 
     -- ── CLIENT EVENTS ─────────────────────────────────────────────────────────

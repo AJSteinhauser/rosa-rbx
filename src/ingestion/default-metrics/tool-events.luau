@@ -1,7 +1,11 @@
+local ACTIVATED_COOLDOWN = 1 -- seconds; suppresses rapid-fire repeat activations (e.g. automatic weapons)
+
 return function(handler, _services)
 	local Players = (_services and _services.Players) or game:GetService("Players")
+	local getTime = (_services and _services.getTime) or os.clock
 
 	local connected = {} -- [Tool] = true, prevents double-connecting when tool moves between backpack/character
+	local lastActivated = {} -- [Tool] = timestamp
 
 	local function connectTool(player: Player, tool: Tool)
 		if connected[tool] then return end
@@ -10,10 +14,14 @@ return function(handler, _services)
 			handler:addServerEvent(player, { tag = "ToolEquipped", custom = { toolName = tool.Name } })
 		end)
 		tool.Activated:Connect(function()
+			local now = getTime()
+			if lastActivated[tool] and (now - lastActivated[tool]) < ACTIVATED_COOLDOWN then return end
+			lastActivated[tool] = now
 			handler:addServerEvent(player, { tag = "ToolActivated", custom = { toolName = tool.Name } })
 		end)
 		tool.Destroying:Connect(function()
 			connected[tool] = nil
+			lastActivated[tool] = nil
 		end)
 	end
 

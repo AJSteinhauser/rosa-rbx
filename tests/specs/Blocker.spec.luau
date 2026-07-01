@@ -1,9 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Blocker           = require(ReplicatedStorage.RosaRbx.egress.components["blocker"])
 
-local function makeBlocker(probeInterval)
+local function makeBlocker(probeInterval, maxInterval, jitterFraction, random)
 	local time = 0
-	local b    = Blocker.new("test", probeInterval or 1800, function() return time end)
+	local b    = Blocker.new("test", probeInterval or 1800, function() return time end, maxInterval, jitterFraction, random)
 	return b, function(t) time = t end
 end
 
@@ -162,6 +162,125 @@ return function()
 
 				expect(quota:isBlocked()).to.equal(false)
 				expect(auth:isBlocked()).to.equal(true)
+			end)
+
+		end)
+
+		describe("exponential backoff (maxInterval set)", function()
+
+			it("doubles the interval on each consecutive failed probe", function()
+				local b, setTime = makeBlocker(100, 10000)
+				setTime(0)
+				b:onBlocked() -- interval = 100
+				setTime(100)
+				b:onBlocked() -- failed probe; interval = 200
+				setTime(299)
+				expect(b:isBlocked()).to.equal(true)
+				setTime(300)
+				expect(b:isBlocked()).to.equal(false)
+			end)
+
+			it("caps growth at maxInterval", function()
+				local b, setTime = makeBlocker(100, 350)
+				setTime(0)
+				b:onBlocked() -- interval = 100
+				setTime(100)
+				b:onBlocked() -- interval = 200
+				setTime(300)
+				b:onBlocked() -- interval = min(400, 350) = 350
+				setTime(649)
+				expect(b:isBlocked()).to.equal(true)
+				setTime(650)
+				expect(b:isBlocked()).to.equal(false)
+			end)
+
+			it("resets to base interval after a success", function()
+				local b, setTime = makeBlocker(100, 10000)
+				setTime(0)
+				b:onBlocked() -- interval = 100
+				setTime(100)
+				b:onBlocked() -- interval = 200
+				setTime(300)
+				b:onSuccess()
+
+				b:onBlocked() -- interval back to base = 100
+				setTime(399)
+				expect(b:isBlocked()).to.equal(true)
+				setTime(400)
+				expect(b:isBlocked()).to.equal(false)
+			end)
+
+			it("does not grow when maxInterval is omitted (default behavior)", function()
+				local b, setTime = makeBlocker(100)
+				setTime(0)
+				b:onBlocked() -- interval = 100
+				setTime(100)
+				b:onBlocked() -- would be 200, but no maxInterval given so capped at base = 100
+				setTime(199)
+				expect(b:isBlocked()).to.equal(true)
+				setTime(200)
+				expect(b:isBlocked()).to.equal(false)
+			end)
+
+		end)
+
+		describe("jitter", function()
+
+			it("shortens the interval by up to jitterFraction", function()
+				-- jitter 0.5, random = 1.0 → interval reduced by full 50%
+				local b, setTime = makeBlocker(100, 100, 0.5, function() return 1.0 end)
+				setTime(0)
+				b:onBlocked() -- interval = 100 * (1 - 0.5*1.0) = 50
+				setTime(49)
+				expect(b:isBlocked()).to.equal(true)
+				setTime(50)
+				expect(b:isBlocked()).to.equal(false)
+			end)
+
+			it("never lengthens the interval (random = 0 keeps full interval)", function()
+				local b, setTime = makeBlocker(100, 100, 0.5, function() return 0 end)
+				setTime(0)
+				b:onBlocked() -- interval = 100 * (1 - 0.5*0) = 100
+				setTime(99)
+				expect(b:isBlocked()).to.equal(true)
+				setTime(100)
+				expect(b:isBlocked()).to.equal(false)
+			end)
+
+		end)
+
+		describe("Retry-After override", function()
+
+			it("acts as a floor longer than the exponential interval", function()
+				local b, setTime = makeBlocker(100, 10000)
+				setTime(0)
+				b:onBlocked(500) -- exponential = 100, Retry-After = 500 wins
+				setTime(499)
+				expect(b:isBlocked()).to.equal(true)
+				setTime(500)
+				expect(b:isBlocked()).to.equal(false)
+			end)
+
+			it("is ignored when shorter than the exponential interval", function()
+				local b, setTime = makeBlocker(100, 10000)
+				setTime(0)
+				b:onBlocked()   -- interval = 100
+				setTime(100)
+				b:onBlocked(20) -- exponential = 200, Retry-After 20 is smaller → 200 wins
+				setTime(299)
+				expect(b:isBlocked()).to.equal(true)
+				setTime(300)
+				expect(b:isBlocked()).to.equal(false)
+			end)
+
+			it("is capped at maxInterval", function()
+				local b, setTime = makeBlocker(100, 350)
+				setTime(0)
+				b:onBlocked(99999) -- Retry-After huge, but capped at maxInterval = 350
+				setTime(349)
+				expect(b:isBlocked()).to.equal(true)
+				setTime(350)
+				expect(b:isBlocked()).to.equal(false)
 			end)
 
 		end)
