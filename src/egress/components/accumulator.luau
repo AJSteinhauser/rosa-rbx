@@ -2,6 +2,7 @@ local HttpService   = game:GetService("HttpService")
 local LeakyBucket   = require(script.Parent.Parent.Parent.utils["leaky-bucket"])
 local ScalingBuffer = require(script.Parent.Parent.Parent.utils["scaling-buffer"])
 local Constants     = require(script.Parent.Parent.Parent.models.constants)
+local Logger        = require(script.Parent.Parent.Parent.utils.logger)
 
 -- Accumulates JSON-encoded events into a single buffer, rate-limiting per session.
 -- The buffer grows until it reaches BODY_OVERSHOOT_TARGET, then signals a flush.
@@ -35,7 +36,7 @@ end
 function Accumulator:addEvent(event): boolean
 	local bucket = self:getOrCreateBucket(event.sessionID)
 	if not bucket:allow() then
-		warn(`Player {event.sessionID} is rate limited.`)
+		Logger.warn(`Player {event.sessionID} is rate limited.`)
 		return false
 	end
 	-- Comma separates events; first event gets none so the array is valid JSON

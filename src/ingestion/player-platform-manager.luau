@@ -8,6 +8,8 @@
 --
 -- NOTE: Client-side listener is set up in EventIngestionHandler.
 
+local Logger = require(script.Parent.Parent.utils.logger)
+
 local PLATFORM_REQUEST_TIMEOUT_SECONDS = 10
 
 local PlayerPlatformManager = {}
@@ -71,7 +73,7 @@ function PlayerPlatformManager:getPlatform(player: Player)
 	self.delay(PLATFORM_REQUEST_TIMEOUT_SECONDS, function()
 		if self.pendingRequests[player] == thread then
 			self.pendingRequests[player] = nil
-			warn("Platform request timed out for: " .. player.Name .. " — defaulting to Unknown")
+			Logger.warn("Platform request timed out for: " .. player.Name .. " — defaulting to Unknown")
 			task.spawn(thread, "Unknown")
 		end
 	end)

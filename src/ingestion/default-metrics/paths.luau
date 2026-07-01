@@ -1,7 +1,7 @@
 local SAMPLE_RATE         = 0.05
 local DISTANCE_THRESHOLD  = 25   -- studs
 local TELEPORT_THRESHOLD  = 100  -- studs; jump beyond this = new path segment
-local DIRECTION_THRESHOLD = 45   -- degrees
+local DIRECTION_THRESHOLD = 35   -- degrees
 local MIN_TAG_INTERVAL    = 0.1  -- seconds between emitted _PathTag events
 
 return function(handler, userConfig, _services)

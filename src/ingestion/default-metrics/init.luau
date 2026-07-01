@@ -5,7 +5,7 @@
 --   playerEvents         — PlayerJoin, PlayerLeave (quantity = sessionDuration)
 --   characterEvents      — CharacterSpawn, CharacterDeath
 --   humanoidStateEvents  — HumanoidStateChange (custom.state: Landed/Freefall/Climbing/Swimming/Seated)
---   paths                — _PathStart + _PathTag (5% sample; triggers: 25 studs, 45° turn)
+--   paths                — _PathStart + _PathTag (5% sample; triggers: 25 studs, 35° turn)
 --   proximityEvents      — PromptTriggered (any ProximityPrompt activation)
 --   toolEvents           — ToolEquipped, ToolActivated
 --   damageEvents         — DamageTaken (quantity = damage; custom.healthPct)
@@ -16,7 +16,6 @@
 --   jumpEvents           — PlayerJump (disabled by default; noisy, low value — opt in with jumpEvents = true)
 --
 -- Client groups (run in LocalScript context):
---   proximityPromptShown — ProximityPromptShown (custom.promptName, distanceToPrompt, inputType; position)
 --   inputMethodChanged   — InputMethodChanged (custom.fromInput, custom.toInput; position)
 --   settingsEvents       — SettingsOpened
 --
@@ -36,7 +35,6 @@ local setupMarketplace         = require(script["marketplace-events"])
 local setupChatEvents          = require(script["chat-events"])
 local setupTeamEvents          = require(script["team-events"])
 local setupJumpEvents          = require(script["jump-events"])
-local setupProximityPromptShown = require(script["proximity-prompt-shown"])
 local setupInputMethodChanged  = require(script["input-method-changed"])
 local setupSettingsEvents      = require(script["settings-events"])
 
@@ -80,9 +78,6 @@ function DefaultMetrics.setup(handler, config, userConfig, _services)
 		setupJumpEvents(handler, _services)
 	end
 
-	if config.proximityPromptShown ~= false then
-		handler:allowClientTag("ProximityPromptShown")
-	end
 	if config.inputMethodChanged ~= false then
 		handler:allowClientTag("InputMethodChanged")
 	end
@@ -92,9 +87,6 @@ function DefaultMetrics.setup(handler, config, userConfig, _services)
 end
 
 function DefaultMetrics.setupClient(handler, config, _services)
-	if config.proximityPromptShown ~= false then
-		setupProximityPromptShown(handler, _services)
-	end
 	if config.inputMethodChanged ~= false then
 		setupInputMethodChanged(handler, _services)
 	end

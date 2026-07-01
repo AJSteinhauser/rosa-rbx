@@ -1,3 +1,5 @@
+local Logger = require(script.Parent.Parent.Parent.utils.logger)
+
 local DEFAULT_PROBE_INTERVAL = 30 * 60
 local BACKOFF_MULTIPLIER     = 2 -- probe interval doubles on each consecutive failed probe
 
@@ -34,7 +36,7 @@ end
 -- a floor: we never probe sooner than the server asked, honored up to maxInterval.
 function Blocker:onBlocked(retryAfterSeconds)
 	if not self._blocked then
-		warn(string.format("ROSA [%s]: blocked. Events discarded until resolved.", self._label))
+		Logger.warn(string.format("[%s]: blocked. Events discarded until resolved.", self._label))
 	end
 	self._attemptCount += 1
 
@@ -57,7 +59,7 @@ end
 function Blocker:onSuccess()
 	if self._blocked then
 		self._blocked = false
-		warn(string.format("ROSA [%s]: resolved. Resuming event ingestion.", self._label))
+		Logger.warn(string.format("[%s]: resolved. Resuming event ingestion.", self._label))
 	end
 	self._attemptCount  = 0
 	self._probeInterval = self._baseInterval

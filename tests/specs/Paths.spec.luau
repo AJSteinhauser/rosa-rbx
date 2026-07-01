@@ -135,7 +135,7 @@ return function()
 			ctx.heartbeat:Fire()
 			expect(#handler.calls).to.equal(2)
 
-			-- Turn 90 degrees (>= 45 degree threshold) while moving only 10 studs.
+			-- Turn 90 degrees (>= 35 degree threshold) while moving only 10 studs.
 			ctx.setTime(2)
 			ctx.setPos(30, 10, 0)
 			ctx.heartbeat:Fire()

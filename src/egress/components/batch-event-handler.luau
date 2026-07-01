@@ -8,6 +8,7 @@ local ApiUtils     = require(script.Parent.Parent.utils["api-utils"])
 local Blocker      = require(script.Parent["blocker"])
 local Constants    = require(script.Parent.Parent.Parent.models.constants)
 local Rng          = require(script.Parent.Parent.Parent.utils.rng)
+local Logger       = require(script.Parent.Parent.Parent.utils.logger)
 
 local instance = nil
 
@@ -62,7 +63,10 @@ function BatchHandler.new()
 	end)
 
 	game:BindToClose(function()
-		self:flushIfNonEmpty()
+		-- Must block until the request actually completes: task.spawn would let this
+		-- callback return immediately, and Roblox tears the server down right after,
+		-- killing the in-flight request before it lands.
+		self:flushIfNonEmpty(true)
 	end)
 
 	return self
@@ -76,10 +80,12 @@ function BatchHandler:isSendingBlocked(): boolean
 		or self.serverBlocker:isBlocked()
 end
 
-function BatchHandler:flushIfNonEmpty()
+function BatchHandler:flushIfNonEmpty(sync: boolean?)
 	local buff = self.accumulator:flushEvents()
 	if buffer.len(buff) > 2 then
-		self:sendEventBuffer(buff)
+		self:sendEventBuffer(buff, sync)
+	elseif sync then
+		Logger.info("BindToClose flush: nothing queued, nothing to send.")
 	end
 end
 
@@ -91,12 +97,17 @@ function BatchHandler:addEvent(event)
 	end
 end
 
-function BatchHandler:sendEventBuffer(buff: buffer)
+-- sync (used only by the game:BindToClose shutdown flush) sends inline instead of via
+-- task.spawn, so the caller actually waits for the request to land before returning.
+function BatchHandler:sendEventBuffer(buff: buffer, sync: boolean?)
 	local compressed = Compressor.compress(buff)
 	if not compressed then
-		self:splitEventsAndFlush(buff)
+		self:splitEventsAndFlush(buff, sync)
 		return
 	end
+
+	local eventCount = #HttpService:JSONDecode(buffer.tostring(buff))
+	Logger.info(string.format("Flushing %d events (%d bytes) to Rosa", eventCount, buffer.len(compressed)))
 
 	local request = {
 		Url     = Constants.EVENTS_API_ROUTE,
@@ -105,7 +116,7 @@ function BatchHandler:sendEventBuffer(buff: buffer)
 		Headers = Signature.generateHeader(),
 	}
 
-	task.spawn(function()
+	local function send()
 		local response, attemptCount = ApiUtils.sendRetryHandler(request)
 		if not response.Success then
 			local code = response.StatusCode
@@ -118,8 +129,8 @@ function BatchHandler:sendEventBuffer(buff: buffer)
 			elseif code >= 500 then
 				self.serverBlocker:onBlocked(parseRetryAfter(response))
 			else
-				warn(string.format(
-					"ROSA API request failed with status %d after %d attempts\n%s\n%s",
+				Logger.warn(string.format(
+					"API request failed with status %d after %d attempts\n%s\n%s",
 					code, attemptCount, response.StatusMessage, response.Body
 				))
 			end
@@ -131,17 +142,23 @@ function BatchHandler:sendEventBuffer(buff: buffer)
 		self.rateLimitBlocker:onSuccess()
 		self.serverBlocker:onSuccess()
 		if attemptCount > 1 then
-			warn(`ROSA API request succeeded after {attemptCount} attempts`)
+			Logger.warn(`API request succeeded after {attemptCount} attempts`)
 		end
-	end)
+	end
+
+	if sync then
+		send()
+	else
+		task.spawn(send)
+	end
 end
 
-function BatchHandler:splitEventsAndFlush(buff: buffer)
+function BatchHandler:splitEventsAndFlush(buff: buffer, sync: boolean?)
 	local json   = buffer.readstring(buff, 0, buffer.len(buff))
 	local events = HttpService:JSONDecode(json)
 	local halfA, halfB = ArrayUtils.splitArrayInHalf(events)
-	self:sendEventBuffer(buffer.fromstring(HttpService:JSONEncode(halfA)))
-	self:sendEventBuffer(buffer.fromstring(HttpService:JSONEncode(halfB)))
+	self:sendEventBuffer(buffer.fromstring(HttpService:JSONEncode(halfA)), sync)
+	self:sendEventBuffer(buffer.fromstring(HttpService:JSONEncode(halfB)), sync)
 end
 
 return BatchHandler

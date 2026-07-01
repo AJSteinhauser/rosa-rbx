@@ -114,7 +114,6 @@ local function makeServices(player, overrides)
 		},
 		ProximityPromptService = {
 			PromptTriggered = makeSignal(),
-			PromptShown     = makeSignal(),
 		},
 		GuiService = {
 			MenuOpened = makeSignal(),
@@ -135,7 +134,7 @@ end
 local ALL_GROUPS = {
 	"playerEvents", "characterEvents", "humanoidStateEvents", "paths", "proximityEvents",
 	"toolEvents", "damageEvents", "idleDetection", "marketplaceEvents", "chatEvents",
-	"teamEvents", "jumpEvents", "proximityPromptShown", "inputMethodChanged", "settingsEvents",
+	"teamEvents", "jumpEvents", "inputMethodChanged", "settingsEvents",
 }
 
 -- Every group disabled; callers flip on/override just the one(s) under test.
@@ -386,19 +385,6 @@ return function()
 
 	describe("DefaultMetrics.setup client-tag allowlisting", function()
 
-		it("allows proximityPromptShown by default, blocks when disabled", function()
-			for _, enabled in { true, false } do
-				local player  = makePlayer()
-				local handler = makeHandler()
-				local config  = allDisabledConfig()
-				if enabled then config.proximityPromptShown = nil end
-
-				DefaultMetrics.setup(handler, config, makeUserConfig(player, config), makeServices(player))
-
-				expect(handler.allowedTags["ProximityPromptShown"] == true).to.equal(enabled)
-			end
-		end)
-
 		it("allows inputMethodChanged by default, blocks when disabled", function()
 			for _, enabled in { true, false } do
 				local player  = makePlayer()
@@ -428,25 +414,6 @@ return function()
 	end)
 
 	describe("DefaultMetrics.setupClient group gating", function()
-
-		it("proximityPromptShown: fires by default, silent when disabled", function()
-			for _, enabled in { true, false } do
-				local player  = makePlayer()
-				local handler = makeHandler()
-				local config  = allDisabledConfig()
-				if enabled then config.proximityPromptShown = nil end
-				local services = makeServices(player)
-
-				DefaultMetrics.setupClient(handler, config, services)
-				services.ProximityPromptService.PromptShown:Fire(
-					{ ObjectText = "Door", ActionText = "Open", Parent = nil },
-					Enum.ProximityPromptInputType.Keyboard
-				)
-
-				local event = findClientTag(handler, "ProximityPromptShown")
-				if enabled then expect(event).to.be.ok() else expect(event).never.to.be.ok() end
-			end
-		end)
 
 		it("inputMethodChanged: fires by default, silent when disabled", function()
 			for _, enabled in { true, false } do

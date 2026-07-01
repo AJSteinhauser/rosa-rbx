@@ -6,6 +6,7 @@ local TypeEnforcement   = require(script.Parent["type-enforcement"])
 local BatchHandler      = require(script.Parent.Parent.egress.components["batch-event-handler"])
 local DefaultMetrics    = require(script.Parent["default-metrics"])
 local Types             = require(script.Parent.types)
+local Logger            = require(script.Parent.Parent.utils.logger)
 
 -- Central coordinator for event ingestion.
 --
@@ -80,7 +81,7 @@ function EventIngestionHandler:setupServerConnections()
 		self.clientEventStream.OnServerEvent:Connect(function(player, event)
 			local whitelist = self.userConfig.clientEvents.whitelistedEventTags
 			if whitelist and not table.find(whitelist, event.tag) and not self.internalClientTags[event.tag] then
-				warn(`{event.tag} is not a whitelisted client event.`)
+				Logger.warn(`{event.tag} is not a whitelisted client event.`)
 				return
 			end
 			self:registerEvent(player, event)
@@ -96,7 +97,7 @@ end
 -- Runs event building and batching in a separate task to avoid blocking the caller.
 -- Platform detection may yield, so this must not run on the main thread.
 function EventIngestionHandler:registerEvent(player: Player, eventRequest: Types.EventRequest)
-  if not self.isServer then error("Server only function") end
+  if not self.isServer then Logger.error("Server only function") end
   if self.isStudio and not self.logStudioEvents then return end
 	task.spawn(function()
 		if self.customPlayerDataHook then
@@ -120,17 +121,17 @@ end
 
 -- Queues an event for ingestion. Works from both server and client scripts.
 function EventIngestionHandler:allowClientTag(tag: string)
-	if not self.isServer then error("Server only function") end
+	if not self.isServer then Logger.error("Server only function") end
 	self.internalClientTags[tag] = true
 end
 
 function EventIngestionHandler:addServerEvent(player: Player, eventRequest: Types.EventRequest)
-  if not self.isServer then error("Server only function") end
+  if not self.isServer then Logger.error("Server only function") end
   self.serverEventStream:Fire(player, eventRequest)
 end
 
 function EventIngestionHandler:addClientEvent(eventRequest: Types.EventRequest)
-  if self.isServer then error("Client only function") end
+  if self.isServer then Logger.error("Client only function") end
   self.clientEventStream:FireServer(eventRequest)
 end
 
