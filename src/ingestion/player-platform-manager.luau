@@ -1,5 +1,3 @@
-local Players = game:GetService("Players")
-
 -- Detects and caches each player's platform (PC, Mobile, Console, VR).
 --
 -- Flow:
@@ -10,18 +8,30 @@ local Players = game:GetService("Players")
 --
 -- NOTE: Client-side listener is set up in EventIngestionHandler.
 
+local PLATFORM_REQUEST_TIMEOUT_SECONDS = 10
+
 local PlayerPlatformManager = {}
 PlayerPlatformManager.__index = PlayerPlatformManager
 
-function PlayerPlatformManager.new()
+local function createRemoteEvent()
+	local remote  = Instance.new("RemoteEvent")
+	remote.Name   = "PlatformManager"
+	remote.Parent = script
+	return remote
+end
+
+-- _services (Players, remoteEvent, delay) is for tests; production callers omit it
+-- and get the real Roblox-backed RemoteEvent/PlayerRemoving/task.delay.
+function PlayerPlatformManager.new(_services)
 	local self = setmetatable({}, PlayerPlatformManager)
+	local Players = (_services and _services.Players) or game:GetService("Players")
+	self.delay = (_services and _services.delay) or task.delay
+
 	self.platformCache   = {} -- [Player] = Enum.Platform
 	self.pendingRequests = {} -- [Player] = coroutine thread
 
 	-- RemoteEvent parented to this module so the client can find it via WaitForChild
-	local remote = Instance.new("RemoteEvent")
-	remote.Name   = "PlatformManager"
-	remote.Parent = script
+	local remote = (_services and _services.remoteEvent) or createRemoteEvent()
 	self.remoteEvent = remote
 
 	-- When the client responds with their platform
@@ -58,7 +68,7 @@ function PlayerPlatformManager:getPlatform(player: Player)
 	self.pendingRequests[player] = thread
 
 	-- Timeout: if the client doesn't respond within 10s, fall back to "Unknown"
-	task.delay(10, function()
+	self.delay(PLATFORM_REQUEST_TIMEOUT_SECONDS, function()
 		if self.pendingRequests[player] == thread then
 			self.pendingRequests[player] = nil
 			warn("Platform request timed out for: " .. player.Name .. " — defaulting to Unknown")

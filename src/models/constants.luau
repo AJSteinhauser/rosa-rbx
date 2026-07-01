@@ -27,6 +27,11 @@ local SERVER_BLOCKER_MAX_INTERVAL = 10 * 60  -- 10 minutes; backoff cap
 
 local BLOCKER_JITTER = 0.25 -- fraction; spreads probe times across the fleet
 
+-- Background HID noise (Steam Input virtualizing a controller, wireless dongles that
+-- expose a phantom joystick, etc.) can flip LastInputTypeChanged without real player
+-- input. Require the new category to hold for this long before treating it as real.
+local INPUT_METHOD_DEBOUNCE_SECONDS = 0.5
+
 local SECRETS_KEY_LOOKUP = "ROSA_API_KEY"
 
 local DEV_MODE = false
@@ -58,6 +63,7 @@ return {
 	SERVER_BLOCKER_INTERVAL          = SERVER_BLOCKER_INTERVAL,
 	SERVER_BLOCKER_MAX_INTERVAL      = SERVER_BLOCKER_MAX_INTERVAL,
 	BLOCKER_JITTER                   = BLOCKER_JITTER,
+	INPUT_METHOD_DEBOUNCE_SECONDS    = INPUT_METHOD_DEBOUNCE_SECONDS,
 	SECRETS_KEY_LOOKUP               = SECRETS_KEY_LOOKUP,
 	INGESTION_BASE_API_ROUTE         = INGESTION_BASE_API_ROUTE,
 	EVENTS_API_ROUTE                 = EVENTS_API_ROUTE,

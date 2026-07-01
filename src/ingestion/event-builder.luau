@@ -1,4 +1,4 @@
-local HttpService           = game:GetService("HttpService")
+local DefaultHttpService    = game:GetService("HttpService")
 local SessionManager        = require(script.Parent["session-manager"])
 local PlayerPlatformManager = require(script.Parent["player-platform-manager"])
 local Helpers               = require(script.Parent.Parent.utils.helpers)
@@ -18,11 +18,15 @@ end
 local EventBuilder = {}
 EventBuilder.__index = EventBuilder
 
-function EventBuilder.new(config)
+-- _services (HttpService, sessionManager, platformManager, getPlaceVersion) is for
+-- tests; production callers omit it and get the real Roblox-backed dependencies.
+function EventBuilder.new(config, _services)
 	local self = setmetatable({}, EventBuilder)
 	self.config          = config
-	self.sessionManager  = SessionManager.new()
-	self.platformManager = PlayerPlatformManager.new()
+	self.httpService     = (_services and _services.HttpService)     or DefaultHttpService
+	self.sessionManager  = (_services and _services.sessionManager)  or SessionManager.new()
+	self.platformManager = (_services and _services.platformManager) or PlayerPlatformManager.new()
+	self.getPlaceVersion = (_services and _services.getPlaceVersion) or function() return tostring(game.PlaceVersion) end
 	return self
 end
 
@@ -39,11 +43,11 @@ function EventBuilder:buildEvent(player: Player, eventRequest: Types.EventReques
 	if self.config.getVersion then
 		version = self.config.getVersion()
 	else
-		version = tostring(game.PlaceVersion)
+		version = self.getPlaceVersion()
 	end
 
 	return {
-		eventId        = HttpService:GenerateGUID(false),
+		eventId        = self.httpService:GenerateGUID(false),
 		eventTimeStamp = timeMs(),
 		sessionID      = self.sessionManager:getSessionId(player),
 		tag            = eventRequest.tag,

@@ -57,8 +57,8 @@ return function()
 			expect(ApiModels.RETRYABLE_HTTP_STATUS_CODES[408]).to.equal(true)
 		end)
 
-		it("includes 429 (Too Many Requests)", function()
-			expect(ApiModels.RETRYABLE_HTTP_STATUS_CODES[429]).to.equal(true)
+		it("does not mark 429 as inline-retryable (trips the rate-limit blocker instead)", function()
+			expect(ApiModels.RETRYABLE_HTTP_STATUS_CODES[429]).never.to.equal(true)
 		end)
 
 		it("includes 500 (Internal Server Error)", function()

@@ -53,7 +53,7 @@ function DefaultMetrics.setup(handler, config, userConfig, _services)
 		setupHumanoidStateEvents(handler, _services)
 	end
 	if config.paths ~= false then
-		setupPaths(handler, userConfig or {})
+		setupPaths(handler, userConfig or {}, _services)
 	end
 	if config.proximityEvents ~= false then
 		setupProximityEvents(handler, _services)

@@ -11,14 +11,20 @@
 -- even for servers that boot in the same millisecond. os.clock/os.time are folded in
 -- as a fallback for Studio, where JobId is an empty string.
 
-local jobId = game.JobId or ""
-
-local seed = os.time()
-for i = 1, #jobId do
-	seed = (seed * 31 + string.byte(jobId, i)) % 2147483647
+-- Folds jobId's bytes and the clock reading into a single seed in [0, 2147483647).
+-- Pulled out as a pure function so the distinctness/range properties are testable
+-- without depending on module-load-time globals.
+local function computeSeed(jobId: string, time: number, clockMicros: number): number
+	local seed = time
+	for i = 1, #jobId do
+		seed = (seed * 31 + string.byte(jobId, i)) % 2147483647
+	end
+	seed = (seed + clockMicros) % 2147483647
+	return seed
 end
-seed = (seed + math.floor(os.clock() * 1e6)) % 2147483647
 
+local jobId = game.JobId or ""
+local seed  = computeSeed(jobId, os.time(), math.floor(os.clock() * 1e6))
 local generator = Random.new(seed)
 
 return {
@@ -26,4 +32,5 @@ return {
 	next = function(): number
 		return generator:NextNumber()
 	end,
+	computeSeed = computeSeed,
 }
