@@ -18,15 +18,14 @@ end
 local EventBuilder = {}
 EventBuilder.__index = EventBuilder
 
--- _services (HttpService, sessionManager, platformManager, getPlaceVersion) is for
--- tests; production callers omit it and get the real Roblox-backed dependencies.
+-- _services (HttpService, sessionManager, platformManager) is for tests;
+-- production callers omit it and get the real Roblox-backed dependencies.
 function EventBuilder.new(config, _services)
 	local self = setmetatable({}, EventBuilder)
 	self.config          = config
 	self.httpService     = (_services and _services.HttpService)     or DefaultHttpService
 	self.sessionManager  = (_services and _services.sessionManager)  or SessionManager.new()
 	self.platformManager = (_services and _services.platformManager) or PlayerPlatformManager.new()
-	self.getPlaceVersion = (_services and _services.getPlaceVersion) or function() return tostring(game.PlaceVersion) end
 	return self
 end
 
@@ -39,13 +38,6 @@ function EventBuilder:buildEvent(player: Player, eventRequest: Types.EventReques
 
 	local platform = self.platformManager:getPlatform(player) -- yields if not cached
 
-	local version
-	if self.config.getVersion then
-		version = self.config.getVersion()
-	else
-		version = self.getPlaceVersion()
-	end
-
 	return {
 		eventId        = self.httpService:GenerateGUID(false),
 		eventTimeStamp = timeMs(),
@@ -53,8 +45,8 @@ function EventBuilder:buildEvent(player: Player, eventRequest: Types.EventReques
 		tag            = eventRequest.tag,
 		platform       = typeof(platform) == "EnumItem" and platform.Name or tostring(platform),
 		position       = position,
-		version        = version,
-		teamId         = self.config.getTeamName and self.config.getTeamName(player) or nil,
+		version        = self.config.getVersion(),
+		teamId         = self.config.getTeamName(player),
 		mapName        = self.config.getMapName and self.config.getMapName(player) or nil,
 		quantity       = eventRequest.quantity,
 		custom         = eventRequest.custom,

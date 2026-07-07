@@ -40,15 +40,18 @@ local Rosa = require(script.ingestion["event-ingestion-handler"]).new({
 
     -- ── CLIENT EVENTS ─────────────────────────────────────────────────────────
     -- Allows LocalScripts to send events via Rosa:addClientEvent().
+    -- Restrict which tags clients are allowed to send.
+    -- Remove whitelistedEventTags entirely to allow all tags. 
+    --
+    -- ButtonPress is enabled here as an example
     clientEvents = {
         enabled              = true,
-        -- Restrict which tags clients are allowed to send.
-        -- Remove whitelistedEventTags entirely to allow all tags.
         whitelistedEventTags = { "ButtonPress" },
     },
 
     -- ── STUDIO SETTINGS ──────────────────────────────────────────────────────
     -- Events are NOT recorded in Studio by default. Set to true to enable.
+    -- Note: You must add the ROSA API secret key to studio settings
     logStudioEvents = false,
 
     -- ── OPTIONAL OVERRIDES ────────────────────────────────────────────────────
@@ -60,8 +63,13 @@ local Rosa = require(script.ingestion["event-ingestion-handler"]).new({
     -- Your game's version string. Defaults to PlaceVersion.
     -- getVersion = function() return "1.0.0" end,
 
-    -- The player's current team, attached to every event. Nil by default.
+    -- The player's current team, attached to every event. Defaults to reading
+    -- player.Team.Name. Also used by the position broadcast below.
     -- getTeamName = function(player) return player.Team and player.Team.Name end,
+
+    -- How teams are enumerated for the position broadcast. Return a list of
+    -- team name strings; defaults to reading game.Teams.
+    -- getAllTeams = function() return { "Red", "Blue" } end,
 
     -- The current map name, attached to every event. Nil by default.
     -- getMapName = function(player) return "Lobby" end,

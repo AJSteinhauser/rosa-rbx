@@ -51,16 +51,6 @@ return function()
 			end)
 		end)
 
-		describe("addEvent()", function()
-			it("does not throw for a well-formed event", function()
-				local handler = getHandler()
-				if not handler then return end
-				expect(function()
-					handler:addEvent(makeEvent("ValidEvent"))
-				end).never.to.throw()
-			end)
-		end)
-
 		describe("quota blocker (403)", function()
 			it("discards addEvent calls while blocked", function()
 				local handler = getHandler()

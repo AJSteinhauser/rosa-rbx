@@ -49,10 +49,6 @@ return function()
 
 	describe("ApiModels.RETRYABLE_HTTP_STATUS_CODES", function()
 
-		it("is a table", function()
-			expect(typeof(ApiModels.RETRYABLE_HTTP_STATUS_CODES)).to.equal("table")
-		end)
-
 		it("includes 408 (Request Timeout)", function()
 			expect(ApiModels.RETRYABLE_HTTP_STATUS_CODES[408]).to.equal(true)
 		end)

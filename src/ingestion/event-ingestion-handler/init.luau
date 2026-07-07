@@ -1,4 +1,3 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService        = game:GetService("RunService")
 local UserInputService  = game:GetService("UserInputService")
 local EventBuilder      = require(script.Parent["event-builder"])
@@ -7,11 +6,13 @@ local BatchHandler      = require(script.Parent.Parent.egress.components["batch-
 local DefaultMetrics    = require(script.Parent["default-metrics"])
 local Types             = require(script.Parent.types)
 local Logger            = require(script.Parent.Parent.utils.logger)
+local Broadcast         = require(script.Parent.Parent.broadcast)
 
 -- Central coordinator for event ingestion.
 --
--- SERVER: Creates RemoteEvent/BindableEvent infrastructure, validates and batches events.
--- CLIENT: Connects to existing RemoteEvents, responds to platform detection requests.
+-- SERVER: Uses the RemoteEvent/BindableEvent Rojo instantiates as children of this
+--         module (ServerEventStream, RosaClientEventStream), validates and batches events.
+-- CLIENT: Connects to the same RemoteEvent, responds to platform detection requests.
 
 -- On the client, wire up the platform listener as soon as this module is required.
 -- This runs once at module load time so it works even if new() is called late.
@@ -40,6 +41,28 @@ function EventIngestionHandler.new(userConfig)
 		end
 	end
 
+	if not userConfig.getVersion then
+		userConfig.getVersion = function(): string
+			return tostring(game.PlaceVersion)
+		end
+	end
+
+	if not userConfig.getTeamName then
+		userConfig.getTeamName = function(player: Player): string?
+			return player.Team and player.Team.Name or nil
+		end
+	end
+
+	if not userConfig.getAllTeams then
+		userConfig.getAllTeams = function(): { string }
+			local names = {}
+			for _, team in game:GetService("Teams"):GetTeams() do
+				table.insert(names, team.Name)
+			end
+			return names
+		end
+	end
+
 	self.userConfig            = userConfig
 	self.customPlayerDataHook  = userConfig.customPlayerDataHook
 	self.isServer              = RunService:IsServer()
@@ -47,13 +70,11 @@ function EventIngestionHandler.new(userConfig)
 	self.isStudio              = RunService:IsStudio()
 
 	if self.isServer then
-		-- Create streams before setting up connections so they exist when listeners fire
-		self.serverEventStream = Instance.new("BindableEvent")
-		self.serverEventStream.Name = "ServerEventStream"
-
-		self.clientEventStream = Instance.new("RemoteEvent")
-		self.clientEventStream.Name   = "RosaClientEventStream"
-		self.clientEventStream.Parent = ReplicatedStorage
+		-- ServerEventStream/RosaClientEventStream are Rojo-instantiated children of this
+		-- module (see ServerEventStream.model.json / RosaClientEventStream.model.json),
+		-- not created at runtime, so they exist identically for every server.
+		self.serverEventStream = script.ServerEventStream :: BindableEvent
+		self.clientEventStream = script.RosaClientEventStream :: RemoteEvent
 
 		self.eventBuilder       = EventBuilder.new(userConfig)
 		self.batchHandler       = BatchHandler.new()
@@ -64,9 +85,19 @@ function EventIngestionHandler.new(userConfig)
 		if userConfig.defaultMetrics then
 			DefaultMetrics.setup(self, userConfig.defaultMetrics, userConfig)
 		end
+
+		if not self.isStudio or self.logStudioEvents then
+			-- pcall'd so a MemoryStore failure can't take down the rest of Rosa's startup.
+			local broadcastOk, broadcastErr = pcall(function()
+				Broadcast.new(userConfig)
+			end)
+			if not broadcastOk then
+				Logger.warn("Failed to start broadcast coordinator: " .. tostring(broadcastErr))
+			end
+		end
 	else
-		-- Wait for the server to create the client event stream
-		self.clientEventStream = ReplicatedStorage:WaitForChild("RosaClientEventStream")
+		-- Wait for the RemoteEvent to replicate down from the server.
+		self.clientEventStream = script:WaitForChild("RosaClientEventStream")
 		if userConfig.defaultMetrics then
 			DefaultMetrics.setupClient(self, userConfig.defaultMetrics)
 		end

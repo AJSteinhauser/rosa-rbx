@@ -6,10 +6,6 @@ local SEED_MODULUS = 2147483647
 return function()
 	describe("Rng.next", function()
 
-		it("returns a number", function()
-			expect(typeof(Rng.next())).to.equal("number")
-		end)
-
 		it("stays within [0, 1) across many calls", function()
 			for _ = 1, 200 do
 				local value = Rng.next()

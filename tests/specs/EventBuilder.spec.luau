@@ -11,8 +11,14 @@ local function makeHttpService()
 	}
 end
 
+-- getVersion/getTeamName are required on config in production (event-ingestion-handler.luau
+-- guarantees both before EventBuilder ever runs — see its default-injection block), so
+-- tests that aren't specifically exercising those hooks get harmless stand-ins here.
 local function makeBuilder(config, overrides)
 	overrides = overrides or {}
+	config = config or {}
+	config.getVersion  = config.getVersion  or function() return "test-version" end
+	config.getTeamName = config.getTeamName or function() return nil end
 	local services = {
 		HttpService     = overrides.HttpService or makeHttpService(),
 		sessionManager  = overrides.sessionManager or {
@@ -21,7 +27,6 @@ local function makeBuilder(config, overrides)
 		platformManager = overrides.platformManager or {
 			getPlatform = function(_, _player) return Enum.UserInputType.Gamepad1 end,
 		},
-		getPlaceVersion = overrides.getPlaceVersion or function() return "42" end,
 	}
 	return EventBuilder.new(config, services), services
 end
@@ -96,7 +101,7 @@ return function()
 
 	describe("EventBuilder:buildEvent version resolution", function()
 
-		it("uses config.getVersion() when provided", function()
+		it("uses config.getVersion()", function()
 			local builder = makeBuilder({
 				getPosition = function() return Vector3.new(0, 0, 0) end,
 				getVersion  = function() return "1.2.3" end,
@@ -105,17 +110,6 @@ return function()
 			local event = builder:buildEvent(makePlayer(), { tag = "Test" })
 
 			expect(event.version).to.equal("1.2.3")
-		end)
-
-		it("falls back to getPlaceVersion() when config.getVersion is absent", function()
-			local builder = makeBuilder(
-				{ getPosition = function() return Vector3.new(0, 0, 0) end },
-				{ getPlaceVersion = function() return "99" end }
-			)
-
-			local event = builder:buildEvent(makePlayer(), { tag = "Test" })
-
-			expect(event.version).to.equal("99")
 		end)
 
 	end)
@@ -146,7 +140,10 @@ return function()
 			expect(event.mapName).to.equal("Skyline")
 		end)
 
-		it("omits teamId and mapName when the config hooks are absent", function()
+		it("omits teamId when getTeamName resolves to nil, and mapName when getMapName is absent entirely", function()
+			-- getTeamName is a required hook (event-ingestion-handler.luau always
+			-- injects a default) but can still resolve to nil for a teamless player.
+			-- getMapName has no default at all, so it's genuinely optional here.
 			local builder = makeBuilder({ getPosition = function() return Vector3.new(0, 0, 0) end })
 
 			local event = builder:buildEvent(makePlayer(), { tag = "Test" })

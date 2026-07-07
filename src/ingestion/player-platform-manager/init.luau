@@ -15,13 +15,6 @@ local PLATFORM_REQUEST_TIMEOUT_SECONDS = 10
 local PlayerPlatformManager = {}
 PlayerPlatformManager.__index = PlayerPlatformManager
 
-local function createRemoteEvent()
-	local remote  = Instance.new("RemoteEvent")
-	remote.Name   = "PlatformManager"
-	remote.Parent = script
-	return remote
-end
-
 -- _services (Players, remoteEvent, delay) is for tests; production callers omit it
 -- and get the real Roblox-backed RemoteEvent/PlayerRemoving/task.delay.
 function PlayerPlatformManager.new(_services)
@@ -32,8 +25,9 @@ function PlayerPlatformManager.new(_services)
 	self.platformCache   = {} -- [Player] = Enum.Platform
 	self.pendingRequests = {} -- [Player] = coroutine thread
 
-	-- RemoteEvent parented to this module so the client can find it via WaitForChild
-	local remote = (_services and _services.remoteEvent) or createRemoteEvent()
+	-- PlatformManager is a Rojo-instantiated child of this module (see
+	-- PlatformManager.model.json), not created at runtime.
+	local remote = (_services and _services.remoteEvent) or (script.PlatformManager :: RemoteEvent)
 	self.remoteEvent = remote
 
 	-- When the client responds with their platform
