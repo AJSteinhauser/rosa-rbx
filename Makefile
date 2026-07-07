@@ -24,6 +24,7 @@ $(DIST_DIR):
 
 build: install $(DIST_DIR)
 	rojo build model.project.json --output $(PACKAGE)
+	open $(DIST_DIR)
 	@echo "Built: $(PACKAGE)"
 
 test-place: install $(DIST_DIR)

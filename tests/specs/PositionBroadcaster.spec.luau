@@ -211,7 +211,7 @@ return function()
 					if checkCount == 1 then return 0 end -- startedAt
 					return Constants.BROADCAST_MAX_DURATION_SECONDS -- every check thereafter: exactly at the ceiling
 				end
-				local broadcaster = PositionBroadcaster.new({ wait = function() end, now = now })
+				local broadcaster = PositionBroadcaster.new({ HttpService = makeHttpService({}), wait = function() end, now = now })
 
 				local sendCalls = 0
 				broadcaster.sendPositions = function()
@@ -233,7 +233,7 @@ return function()
 					if checkCount == 1 then return 0 end
 					return Constants.BROADCAST_MAX_DURATION_SECONDS - 1
 				end
-				local broadcaster = PositionBroadcaster.new({ wait = function() end, now = now })
+				local broadcaster = PositionBroadcaster.new({ HttpService = makeHttpService({}), wait = function() end, now = now })
 
 				local sendCalls = 0
 				broadcaster.sendPositions = function()
@@ -254,7 +254,7 @@ return function()
 					if checkCount == 1 then return 0 end
 					return Constants.BROADCAST_MAX_DURATION_SECONDS * 10 -- huge overshoot in a single step
 				end
-				local broadcaster = PositionBroadcaster.new({ wait = function() end, now = now })
+				local broadcaster = PositionBroadcaster.new({ HttpService = makeHttpService({}), wait = function() end, now = now })
 
 				local sendCalls = 0
 				broadcaster.sendPositions = function()
@@ -283,7 +283,7 @@ return function()
 			end)
 
 			it("resets the failure counter on any success, so intermittent failures never trip the ceiling", function()
-				local broadcaster = PositionBroadcaster.new({ wait = function() end })
+				local broadcaster = PositionBroadcaster.new({ HttpService = makeHttpService({}), wait = function() end })
 
 				local callCount = 0
 				broadcaster.sendPositions = function()

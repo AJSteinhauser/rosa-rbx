@@ -118,7 +118,7 @@ return function()
 				local http = makeHttpService({ response(false, 402) })
 				local poller = LeaderPoller.new(makeLeaderElection(true), makeBroadcastSignal(), { HttpService = http })
 
-				expect(poller.pollIntervalSeconds).to.equal(15)
+				expect(poller.pollIntervalSeconds).to.equal(10)
 				poller:poll()
 				expect(poller.pollIntervalSeconds).to.equal(30 * 60)
 			end)
@@ -138,8 +138,8 @@ return function()
 				poller:poll() -- now in not-entitled mode
 
 				expect(#capturedTtls).to.equal(2)
-				expect(capturedTtls[1]).to.equal(35)      -- LEADER_LEASE_TTL_SECONDS
-				expect(capturedTtls[2]).to.equal(35 * 60)  -- BROADCAST_NOT_ENTITLED_LEASE_TTL_SECONDS
+				expect(capturedTtls[1]).to.equal(35)
+				expect(capturedTtls[2]).to.equal(35 * 60)
 			end)
 
 			it("resumes the normal interval once a poll comes back as something other than 402", function()
@@ -154,7 +154,7 @@ return function()
 				expect(poller.pollIntervalSeconds).to.equal(30 * 60)
 
 				poller:poll()
-				expect(poller.pollIntervalSeconds).to.equal(15)
+				expect(poller.pollIntervalSeconds).to.equal(10)
 				expect(broadcastSignal.publishCount).to.equal(1)
 			end)
 
@@ -173,7 +173,7 @@ return function()
 
 				poller:start()
 
-				expect(waitedFor[1]).to.equal(15)
+				expect(waitedFor[1]).to.equal(10)
 				expect(waitedFor[2]).to.equal(30 * 60)
 			end)
 		end)

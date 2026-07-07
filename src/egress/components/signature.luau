@@ -1,8 +1,9 @@
 local HttpService = game:GetService("HttpService")
 local Constants = require(script.Parent.Parent.Parent.models.constants)
 local Version   = require(script.Parent.Parent.Parent.models.version)
+local JobId     = require(script.Parent.Parent.Parent.utils["job-id"])
 
-local shardId = game.JobId ~= "" and game.JobId or HttpService:GenerateGUID(false)
+local shardId = JobId.jobId
 
 local function generateHeader(httpService)
 	local secretService = httpService or HttpService
