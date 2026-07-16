@@ -11,12 +11,24 @@ return function(handler, userConfig, _services)
 		and userConfig.defaultMetrics.idleThresholdSeconds
 	) or DEFAULT_IDLE_SECONDS
 
-	local states = {} -- [Player] = { lastPos, idleSince, fired }
+	local states = {} -- [Player] = { lastPos, idleSince, isIdle }
+
+	local function logIdleEnd(player: Player, state, now: number)
+		handler:addServerEvent(player, {
+			tag      = "PlayerIdle",
+			quantity = math.floor(now - state.idleSince),
+		})
+	end
 
 	local function beginTracking(player: Player)
 		local pos = userConfig.getPosition(player)
 		if not pos then return end
-		states[player] = { lastPos = pos, idleSince = getTime(), fired = false }
+		local existing = states[player]
+		if existing then
+			existing.lastPos = pos -- respawn isn't movement; keep idleSince/isIdle running
+		else
+			states[player] = { lastPos = pos, idleSince = getTime(), isIdle = false }
+		end
 	end
 
 	RunService.Heartbeat:Connect(function()
@@ -26,15 +38,14 @@ return function(handler, userConfig, _services)
 			if not pos then continue end
 
 			if (pos - state.lastPos).Magnitude >= MOVEMENT_THRESHOLD then
+				if state.isIdle then
+					logIdleEnd(player, state, now)
+				end
 				state.lastPos   = pos
 				state.idleSince = now
-				state.fired     = false
-			elseif not state.fired and (now - state.idleSince) >= idleThreshold then
-				state.fired = true
-				handler:addServerEvent(player, {
-					tag      = "PlayerIdle",
-					quantity = math.floor(now - state.idleSince),
-				})
+				state.isIdle    = false
+			elseif not state.isIdle and (now - state.idleSince) >= idleThreshold then
+				state.isIdle = true
 			end
 		end
 	end)
@@ -50,7 +61,22 @@ return function(handler, userConfig, _services)
 	end
 
 	Players.PlayerAdded:Connect(watchPlayer)
-	Players.PlayerRemoving:Connect(function(player) states[player] = nil end)
+	Players.PlayerRemoving:Connect(function(player)
+		local state = states[player]
+		if state and state.isIdle then
+			logIdleEnd(player, state, getTime())
+		end
+		states[player] = nil
+	end)
+
+	game:BindToClose(function()
+		local now = getTime()
+		for player, state in states do
+			if state.isIdle then
+				logIdleEnd(player, state, now)
+			end
+		end
+	end)
 
 	for _, player in Players:GetPlayers() do
 		watchPlayer(player)

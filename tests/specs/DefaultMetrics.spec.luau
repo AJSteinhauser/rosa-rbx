@@ -296,7 +296,10 @@ return function()
 				DefaultMetrics.setup(handler, config, makeUserConfig(player, config), services)
 				services.RunService.Heartbeat:Fire() -- begin tracking
 				time = 2
-				services.RunService.Heartbeat:Fire() -- exceeds 1s threshold
+				services.RunService.Heartbeat:Fire() -- exceeds 1s threshold, idle confirmed
+				player.Character.Position = Vector3.new(100, 0, 0)
+				time = 3
+				services.RunService.Heartbeat:Fire() -- moves, ends idle period
 
 				local event = findServerTag(handler, "PlayerIdle")
 				if enabled then expect(event).to.be.ok() else expect(event).never.to.be.ok() end

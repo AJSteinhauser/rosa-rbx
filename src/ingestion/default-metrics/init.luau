@@ -9,7 +9,7 @@
 --   proximityEvents      — PromptTriggered (any ProximityPrompt activation)
 --   toolEvents           — ToolEquipped, ToolActivated
 --   damageEvents         — DamageTaken (quantity = damage; custom.healthPct)
---   idleDetection        — PlayerIdle (quantity = idleDuration; tune with idleThresholdSeconds)
+--   idleDetection        — PlayerIdle, logged once idle ends via movement/leave/shutdown (quantity = idleDuration; tune with idleThresholdSeconds)
 --   marketplaceEvents    — ProductPurchased, ProductDeclined, GamePassPurchased, GamePassDeclined
 --   chatEvents           — ChatMessage
 --   teamEvents           — TeamChanged (teamId = new team name)
