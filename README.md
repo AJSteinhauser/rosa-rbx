@@ -9,3 +9,16 @@ npm run build
 ```
 
 For more help, check out [the Rojo documentation](https://rojo.space/docs).
+
+## Auto-configure Rosa in your game
+
+This repo ships a `setup-rosa-analytics` agent skill that scans your Roblox/Luau codebase and
+wires up Rosa event tracking automatically. Install it into your project's coding agent (Claude
+Code, Cursor, etc.) with:
+
+```bash
+npx skills add AJSteinhauser/rosa-rbx-pipeline
+```
+
+Then ask your agent to "set up Rosa analytics" and it'll instrument kills, purchases, quest
+progress, and other game events for you.
