@@ -14,10 +14,14 @@
 --   chatEvents           — ChatMessage
 --   teamEvents           — TeamChanged (teamId = new team name)
 --   jumpEvents           — PlayerJump (disabled by default; noisy, low value — opt in with jumpEvents = true)
+--   rageQuitEvents       — RageQuit, fired on leave when a decayed death/damage/health score crosses
+--                          a threshold (quantity = score; custom.deathAgeSec, custom.healthPct); tune via defaultMetrics.rageQuit
 --
 -- Client groups (run in LocalScript context):
 --   inputMethodChanged   — InputMethodChanged (custom.fromInput, custom.toInput; position)
 --   settingsEvents       — SettingsOpened
+--   fpsDropEvents        — FpsDrop, fired once when rolling FPS dips well below the player's own recent
+--                          baseline (quantity = current fps; custom.baselineFps, custom.dropPct); tune via defaultMetrics.fpsDrop
 --
 -- All groups default to enabled unless noted. Set a group to false to disable:
 --   defaultMetrics = { characterEvents = false }
@@ -35,8 +39,10 @@ local setupMarketplace         = require(script["marketplace-events"])
 local setupChatEvents          = require(script["chat-events"])
 local setupTeamEvents          = require(script["team-events"])
 local setupJumpEvents          = require(script["jump-events"])
+local setupRageQuitEvents      = require(script["rage-quit-events"])
 local setupInputMethodChanged  = require(script["input-method-changed"])
 local setupSettingsEvents      = require(script["settings-events"])
+local setupFpsDropEvents       = require(script["fps-drop-events"])
 
 local DefaultMetrics = {}
 
@@ -77,12 +83,18 @@ function DefaultMetrics.setup(handler, config, userConfig, _services)
 	if config.jumpEvents == true then
 		setupJumpEvents(handler, _services)
 	end
+	if config.rageQuitEvents ~= false then
+		setupRageQuitEvents(handler, userConfig or {}, _services)
+	end
 
 	if config.inputMethodChanged ~= false then
 		handler:allowClientTag("InputMethodChanged")
 	end
 	if config.settingsEvents ~= false then
 		handler:allowClientTag("SettingsOpened")
+	end
+	if config.fpsDropEvents ~= false then
+		handler:allowClientTag("FpsDrop")
 	end
 end
 
@@ -92,6 +104,9 @@ function DefaultMetrics.setupClient(handler, config, _services)
 	end
 	if config.settingsEvents ~= false then
 		setupSettingsEvents(handler, _services)
+	end
+	if config.fpsDropEvents ~= false then
+		setupFpsDropEvents(handler, config, _services)
 	end
 end
 

@@ -102,8 +102,9 @@ local function makeServices(player, overrides)
 			LocalPlayer       = player,
 		},
 		RunService = {
-			Heartbeat = makeSignal(),
-			IsStudio  = function() return true end,
+			Heartbeat     = makeSignal(),
+			RenderStepped = makeSignal(),
+			IsStudio      = function() return true end,
 		},
 		HttpService = {
 			GenerateGUID = function() return "guid" end,
@@ -123,6 +124,9 @@ local function makeServices(player, overrides)
 			TouchEnabled         = true,
 			GetConnectedGamepads = function() return { Enum.UserInputType.Gamepad1 } end,
 		},
+		ContentProvider = {
+			RequestQueueSize = 0,
+		},
 		getTime = function() return 0 end,
 		random  = function() return 0 end,
 		delay   = function(_, fn) fn() end, -- synchronous: bypasses InputMethodChanged's debounce in tests
@@ -134,7 +138,7 @@ end
 local ALL_GROUPS = {
 	"playerEvents", "characterEvents", "humanoidStateEvents", "paths", "proximityEvents",
 	"toolEvents", "damageEvents", "idleDetection", "marketplaceEvents", "chatEvents",
-	"teamEvents", "jumpEvents", "inputMethodChanged", "settingsEvents",
+	"teamEvents", "jumpEvents", "rageQuitEvents", "inputMethodChanged", "settingsEvents", "fpsDropEvents",
 }
 
 -- Every group disabled; callers flip on/override just the one(s) under test.
@@ -384,6 +388,25 @@ return function()
 			expect(event).to.be.ok()
 		end)
 
+		it("rageQuitEvents: fires by default, silent when disabled", function()
+			for _, enabled in { true, false } do
+				local player  = makePlayer()
+				local handler = makeHandler()
+				local config  = allDisabledConfig()
+				if enabled then config.rageQuitEvents = nil end
+				local services = makeServices(player)
+
+				DefaultMetrics.setup(handler, config, makeUserConfig(player, config), services)
+				player.CharacterAdded:Fire(player.character)
+				player.humanoid.HealthChanged:Fire(0) -- delta = 100, drops to zero health
+				player.humanoid.Died:Fire()
+				services.Players.PlayerRemoving:Fire(player)
+
+				local event = findServerTag(handler, "RageQuit")
+				if enabled then expect(event).to.be.ok() else expect(event).never.to.be.ok() end
+			end
+		end)
+
 	end)
 
 	describe("DefaultMetrics.setup client-tag allowlisting", function()
@@ -411,6 +434,19 @@ return function()
 				DefaultMetrics.setup(handler, config, makeUserConfig(player, config), makeServices(player))
 
 				expect(handler.allowedTags["SettingsOpened"] == true).to.equal(enabled)
+			end
+		end)
+
+		it("allows fpsDropEvents by default, blocks when disabled", function()
+			for _, enabled in { true, false } do
+				local player  = makePlayer()
+				local handler = makeHandler()
+				local config  = allDisabledConfig()
+				if enabled then config.fpsDropEvents = nil end
+
+				DefaultMetrics.setup(handler, config, makeUserConfig(player, config), makeServices(player))
+
+				expect(handler.allowedTags["FpsDrop"] == true).to.equal(enabled)
 			end
 		end)
 
@@ -446,6 +482,34 @@ return function()
 				services.GuiService.MenuOpened:Fire()
 
 				local event = findClientTag(handler, "SettingsOpened")
+				if enabled then expect(event).to.be.ok() else expect(event).never.to.be.ok() end
+			end
+		end)
+
+		it("fpsDropEvents: fires by default, silent when disabled", function()
+			for _, enabled in { true, false } do
+				local player  = makePlayer()
+				local handler = makeHandler()
+				local config  = allDisabledConfig()
+				if enabled then config.fpsDropEvents = nil end
+				config.fpsDrop = { warmupSeconds = 1, baselineWindowSeconds = 10, recentWindowSeconds = 1 } -- decoupled from module defaults
+
+				local time = 0
+				local services = makeServices(player, { getTime = function() return time end })
+
+				DefaultMetrics.setupClient(handler, config, services)
+
+				local function runFrames(count, fps)
+					for _ = 1, count do
+						time += 1 / fps
+						services.RunService.RenderStepped:Fire()
+					end
+				end
+
+				runFrames(200, 60)
+				runFrames(29, 15)
+
+				local event = findClientTag(handler, "FpsDrop")
 				if enabled then expect(event).to.be.ok() else expect(event).never.to.be.ok() end
 			end
 		end)
