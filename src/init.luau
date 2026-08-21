@@ -51,8 +51,16 @@ local Rosa = require(script.ingestion["event-ingestion-handler"]).new({
 
     -- ── STUDIO SETTINGS ──────────────────────────────────────────────────────
     -- Events are NOT recorded in Studio by default. Set to true to enable.
-    -- Note: You must add the ROSA API secret key to studio settings
+    --
+    -- ⚠ WARNING: Setting this to true is NOT enough on its own. You must ALSO
+    -- add your ROSA API secret key under Studio's own settings (HttpService /
+    -- Game Settings > Security), separate from the live game's secret key.
+    -- Without it, Studio requests will fail even with this flag enabled.
     logStudioEvents = false,
+
+    -- Warns in Studio on playtest start if something's wrong (HTTP disabled,
+    -- missing secret, no client detected). Silent otherwise. Set to false to disable.
+    logStudioStartupCheck = true,
 
     -- ── OPTIONAL OVERRIDES ────────────────────────────────────────────────────
     -- Rosa has sensible defaults for all of these. Only uncomment what you need.

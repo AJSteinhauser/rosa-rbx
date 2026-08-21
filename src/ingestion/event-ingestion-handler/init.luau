@@ -7,6 +7,7 @@ local DefaultMetrics    = require(script.Parent["default-metrics"])
 local Types             = require(script.Parent.types)
 local Logger            = require(script.Parent.Parent.utils.logger)
 local Broadcast         = require(script.Parent.Parent.broadcast)
+local StudioStartupCheck = require(script["studio-startup-check"])
 
 -- Central coordinator for event ingestion.
 --
@@ -67,6 +68,7 @@ function EventIngestionHandler.new(userConfig)
 	self.customPlayerDataHook  = userConfig.customPlayerDataHook
 	self.isServer              = RunService:IsServer()
 	self.logStudioEvents       = userConfig.logStudioEvents == true
+	self.logStudioStartupCheck = userConfig.logStudioStartupCheck ~= false
 	self.isStudio              = RunService:IsStudio()
 
 	if self.isServer then
@@ -86,6 +88,10 @@ function EventIngestionHandler.new(userConfig)
 			DefaultMetrics.setup(self, userConfig.defaultMetrics, userConfig)
 		end
 
+		if self.isStudio and self.logStudioStartupCheck then
+			StudioStartupCheck.runServerChecks(self, game:GetService("HttpService"))
+		end
+
 		if not self.isStudio or self.logStudioEvents then
 			-- pcall'd so a MemoryStore failure can't take down the rest of Rosa's startup.
 			local broadcastOk, broadcastErr = pcall(function()
@@ -101,23 +107,32 @@ function EventIngestionHandler.new(userConfig)
 		if userConfig.defaultMetrics then
 			DefaultMetrics.setupClient(self, userConfig.defaultMetrics)
 		end
+
+		if self.isStudio and self.logStudioStartupCheck then
+			StudioStartupCheck.runClientCheck(self)
+		end
 	end
 
 	return self
 end
 
 function EventIngestionHandler:setupServerConnections()
-	-- Forward validated client events to the ingestion pipeline
-	if self.userConfig.clientEvents and self.userConfig.clientEvents.enabled then
-		self.clientEventStream.OnServerEvent:Connect(function(player, event)
+	self.clientEventStream.OnServerEvent:Connect(function(player, event)
+		if event.tag == StudioStartupCheck.HANDSHAKE_TAG then
+			StudioStartupCheck.registerClientCheckin(self)
+			return
+		end
+
+		-- Forward validated client events to the ingestion pipeline
+		if self.userConfig.clientEvents and self.userConfig.clientEvents.enabled then
 			local whitelist = self.userConfig.clientEvents.whitelistedEventTags
 			if whitelist and not table.find(whitelist, event.tag) and not self.internalClientTags[event.tag] then
 				Logger.warn(`{event.tag} is not a whitelisted client event.`)
 				return
 			end
 			self:registerEvent(player, event)
-		end)
-	end
+		end
+	end)
 
 	-- Forward server-side events from the BindableEvent
 	self.serverEventStream.Event:Connect(function(player, event)
